@@ -24,7 +24,6 @@ import ubp.das.backndvt.security.JwtAuthenticationFilter;
  * Rutas publicas (RNF03/RNF04: todo lo que no este acá requiere
  * autenticacion):
  * - POST /api/auth/login (RF15)
- * - POST /api/ciudadanos (alta de ciudadano)
  * - GET /api/veterinarias (RF17, listado publico de habilitadas)
  * - GET /api/refugios y /api/publicaciones (RF18, listado publico)
  * - GET /api/carnet/validar (RF11, validacion de carnet para terceros)
@@ -65,7 +64,6 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/ciudadanos").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/veterinarias/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/refugios/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/publicaciones/**").permitAll()

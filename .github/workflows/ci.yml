@@ -1,0 +1,49 @@
+# Integración continua (CI) del backend.
+# Cada vez que se hace push o se abre un pull request contra main,
+# GitHub revisa automáticamente que el código:
+#   1. respete las reglas de estilo (lint),
+#   2. pase todos los tests,
+#   3. compile y genere el archivo .war (build).
+# Si algún paso falla, aparece una cruz roja en GitHub y se puede ver el motivo.
+
+name: CI Backend
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-test-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Instalar Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Dar permiso de ejecución a Maven Wrapper
+        run: chmod +x mvnw
+
+      - name: Lint (reglas de estilo con Checkstyle)
+        run: ./mvnw -B checkstyle:check
+
+      - name: Tests
+        run: ./mvnw -B test
+
+      - name: Build (generar el .war)
+        run: ./mvnw -B package -DskipTests
+
+      - name: Guardar el .war generado
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-war
+          path: target/*.war
+          retention-days: 7

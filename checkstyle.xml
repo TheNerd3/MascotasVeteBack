@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+    "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+    "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<!--
+  Reglas de estilo (lint) del backend.
+  Se revisan automáticamente en cada push y pull request (GitHub Actions).
+  Son reglas básicas para que el código sea prolijo y fácil de leer;
+  si una regla molesta sin sentido, se puede ajustar acá.
+-->
+<module name="Checker">
+    <property name="charset" value="UTF-8"/>
+    <property name="severity" value="error"/>
+
+    <!-- Usar espacios, no tabulaciones -->
+    <module name="FileTabCharacter"/>
+
+    <!-- Líneas no demasiado largas (se leen mejor) -->
+    <module name="LineLength">
+        <property name="max" value="140"/>
+        <property name="ignorePattern" value="^(package|import) "/>
+    </module>
+
+    <module name="TreeWalker">
+        <!-- Imports: sin comodines, sin repetidos y sin imports que no se usan -->
+        <module name="AvoidStarImport"/>
+        <module name="RedundantImport"/>
+        <module name="UnusedImports"/>
+
+        <!-- Nombres consistentes: Clases en PascalCase, métodos y variables en camelCase, constantes en MAYÚSCULAS -->
+        <module name="PackageName">
+            <property name="format" value="^[a-z]+(\.[a-z][a-z0-9]*)*$"/>
+        </module>
+        <module name="TypeName"/>
+        <module name="MethodName"/>
+        <module name="MemberName"/>
+        <module name="ParameterName"/>
+        <module name="LocalVariableName"/>
+        <module name="ConstantName"/>
+
+        <!-- Siempre llaves en if/for/while, aunque sea una sola línea -->
+        <module name="NeedBraces"/>
+
+        <!-- Errores comunes -->
+        <module name="EqualsHashCode"/>
+        <module name="MissingSwitchDefault"/>
+        <module name="EmptyStatement"/>
+        <module name="SimplifyBooleanExpression"/>
+        <module name="SimplifyBooleanReturn"/>
+    </module>
+</module>

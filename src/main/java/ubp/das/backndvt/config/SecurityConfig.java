@@ -21,12 +21,18 @@ import ubp.das.backndvt.security.JwtAuthenticationFilter;
  * JwtAuthenticationFilter). No hay sesiones de servidor: cada request
  * autenticado manda su Bearer token.
  *
+ * Las rutas de esta clase son relativas al backend (sin "/api"): el
+ * prefijo "/api/v1" lo agrega el context path con el que se despliega
+ * el WAR en Tomcat, no el codigo (ver Dockerfile).
+ *
  * Rutas publicas (RNF03/RNF04: todo lo que no este acá requiere
  * autenticacion):
- * - POST /api/auth/login (RF15)
- * - GET /api/veterinarias (RF17, listado publico de habilitadas)
- * - GET /api/refugios y /api/publicaciones (RF18, listado publico)
- * - GET /api/carnet/validar (RF11, validacion de carnet para terceros)
+ * - POST /auth/login (RF15)
+ * - GET /veterinarias (RF17, listado publico de habilitadas)
+ * - GET /refugios y /publicaciones (RF18, listado publico)
+ * - GET /carnet/validar (RF11, validacion de carnet para terceros)
+ * - GET /atenciones-sanitarias/tipos/cantidad (endpoint de diagnostico
+ *   de conexion, no expone datos sensibles)
  */
 @Configuration
 @EnableWebSecurity
@@ -63,11 +69,12 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/veterinarias/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/refugios/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/publicaciones/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/carnet/validar").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/veterinarias/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/refugios/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/publicaciones/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/carnet/validar").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/atenciones-sanitarias/tipos/cantidad").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

@@ -18,7 +18,7 @@ import ubp.das.backndvt.service.CiudadanoService;
  * datos, nunca los de otra persona.
  */
 @RestController
-@RequestMapping("/api/ciudadanos")
+@RequestMapping("/ciudadanos")
 public class CiudadanoController {
 
     private final CiudadanoService ciudadanoService;

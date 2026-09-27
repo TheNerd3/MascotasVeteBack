@@ -16,7 +16,7 @@ import ubp.das.backndvt.service.AuthService;
  * RF15. Es público: para poder loguearse todavía no se tiene un token.
  */
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 public class AuthController {
 
     private final AuthService authService;

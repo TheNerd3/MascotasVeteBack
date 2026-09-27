@@ -12,7 +12,8 @@ import ubp.das.backndvt.dto.LoginResponse;
 import ubp.das.backndvt.service.AuthService;
 
 /**
- * RF15 - Autenticar usuarios. Publico (ver SecurityConfig).
+ * Recibe el pedido de inicio de sesión de un ciudadano. Implementa
+ * RF15. Es público: para poder loguearse todavía no se tiene un token.
  */
 @RestController
 @RequestMapping("/api/auth")

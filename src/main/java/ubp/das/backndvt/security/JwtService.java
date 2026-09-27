@@ -15,13 +15,13 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
 /**
- * Emision y validacion de JWT propios (sin integracion real con CiDi, ver
- * brief seccion 6). El "subject" del token es el cuil del ciudadano; se
- * agrega el claim "perfil" (CIUDADANO/REFUGIO/VETERINARIA/MUNICIPALIDAD)
- * para autorizacion basica en los controllers.
+ * Genera y valida el token que prueba que un ciudadano inició sesión
+ * (RF15). El token guarda el cuil, el id del ciudadano y su perfil,
+ * para no tener que consultar la base en cada pedido al servidor.
  *
- * La clave de firma se toma de la variable de entorno JWT_SECRET. Debe
- * tener al menos 32 caracteres (HMAC-SHA256 lo exige).
+ * La clave con la que se firma el token viene de la variable de
+ * entorno JWT_SECRET (nunca va escrita en el código), y debe tener al
+ * menos 32 caracteres porque el algoritmo de firma lo exige.
  */
 @Service
 public class JwtService {

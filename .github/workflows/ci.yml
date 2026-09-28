@@ -3,7 +3,9 @@
 # GitHub revisa automáticamente que el código:
 #   1. respete las reglas de estilo (lint),
 #   2. pase todos los tests,
-#   3. compile y genere el archivo .war (build).
+#   3. compile y genere el archivo .war (build),
+#   4. y lo analiza en SonarQube Cloud (bugs, vulnerabilidades, código duplicado, cobertura).
+#      Este paso solo corre si está cargado el secreto SONAR_TOKEN en el repo.
 # Si algún paso falla, aparece una cruz roja en GitHub y se puede ver el motivo.
 
 name: CI Backend
@@ -17,10 +19,15 @@ on:
 jobs:
   lint-test-build:
     runs-on: ubuntu-latest
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
     steps:
       - name: Descargar el código
         uses: actions/checkout@v4
+        with:
+          # Historia completa: SonarQube la usa para saber qué código es nuevo
+          fetch-depth: 0
 
       - name: Instalar Java 21
         uses: actions/setup-java@v4
@@ -40,6 +47,10 @@ jobs:
 
       - name: Build (generar el .war)
         run: ./mvnw -B package -DskipTests
+
+      - name: Análisis de calidad con SonarQube Cloud
+        if: env.SONAR_TOKEN != ''
+        run: ./mvnw -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
 
       - name: Guardar el .war generado
         uses: actions/upload-artifact@v4

@@ -46,6 +46,16 @@
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
 
+        <!-- Acceso directo a la base con JdbcTemplate y SQL parametrizado.
+             Se usa para el login (UsuarioRepository), siguiendo el enfoque
+             visto en la materia; el resto del backend sigue usando JPA. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+        </dependency>
+
+        <!-- Driver que permite a Java conectarse a SQL Server, tanto para
+             JPA como para JdbcTemplate. -->
         <dependency>
             <groupId>com.microsoft.sqlserver</groupId>
             <artifactId>mssql-jdbc</artifactId>

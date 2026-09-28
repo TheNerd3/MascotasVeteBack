@@ -21,6 +21,11 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      # Los tests solo levantan el contexto de Spring (validan que los
+      # beans se arman bien), no se conectan a un SQL Server real: estas
+      # son variables de prueba, no credenciales.
+      DB_PASSWORD: password-de-prueba-ci
+      JWT_SECRET: clave-de-prueba-para-ci-de-al-menos-32-caracteres
 
     steps:
       - name: Descargar el código

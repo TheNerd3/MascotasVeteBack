@@ -6,14 +6,16 @@ import org.springframework.stereotype.Service;
 import ubp.das.backndvt.dto.CiudadanoResponse;
 import ubp.das.backndvt.dto.LoginRequest;
 import ubp.das.backndvt.dto.LoginResponse;
-import ubp.das.backndvt.entity.Ciudadano;
 import ubp.das.backndvt.exception.CredencialesInvalidasException;
-import ubp.das.backndvt.repository.CiudadanoRepository;
+import ubp.das.backndvt.repository.UsuarioLogin;
+import ubp.das.backndvt.repository.UsuarioRepository;
 import ubp.das.backndvt.security.JwtService;
 
 /**
- * Implementacion local de AuthService: valida cuil+clave contra la tabla
- * ciudadanos (sin integracion real con CiDi, ver brief seccion 6).
+ * Implementacion local de AuthService: valida usuario (cuil) y clave
+ * contra la tabla ciudadanos, leida con JdbcTemplate (ver
+ * UsuarioRepository). No hay integracion real con CiDi en este
+ * entregable, ver CLAUDE.md seccion 2.
  *
  * El perfil devuelto es siempre CIUDADANO en este PR: los perfiles
  * REFUGIO/VETERINARIA/MUNICIPALIDAD se resuelven en los PRs de esas
@@ -25,34 +27,41 @@ import ubp.das.backndvt.security.JwtService;
 public class LocalAuthService implements AuthService {
 
     private static final String PERFIL_CIUDADANO = "CIUDADANO";
+    private static final String MENSAJE_CREDENCIALES_INVALIDAS = "Usuario o clave incorrectos";
 
-    private final CiudadanoRepository ciudadanoRepository;
+    private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
     public LocalAuthService(
-            CiudadanoRepository ciudadanoRepository,
+            UsuarioRepository usuarioRepository,
             PasswordEncoder passwordEncoder,
             JwtService jwtService) {
-        this.ciudadanoRepository = ciudadanoRepository;
+        this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
     }
 
     @Override
     public LoginResponse login(LoginRequest request) {
-        Ciudadano ciudadano = ciudadanoRepository.findByCuil(request.cuil())
-                .orElseThrow(() -> new CredencialesInvalidasException("Cuil o clave incorrectos"));
+        UsuarioLogin usuario = usuarioRepository.buscarPorCuil(request.usuario())
+                .orElseThrow(() -> new CredencialesInvalidasException(MENSAJE_CREDENCIALES_INVALIDAS));
 
-        if (!Boolean.TRUE.equals(ciudadano.getHabilitado())) {
-            throw new CredencialesInvalidasException("El ciudadano se encuentra deshabilitado");
+        // El mensaje es siempre el mismo genérico, tanto si el usuario no
+        // existe como si existe pero está deshabilitado o la clave no
+        // coincide: así no se le confirma a quien intenta entrar cuál de
+        // los dos datos era el incorrecto.
+        if (!Boolean.TRUE.equals(usuario.habilitado())) {
+            throw new CredencialesInvalidasException(MENSAJE_CREDENCIALES_INVALIDAS);
         }
 
-        if (!passwordEncoder.matches(request.clave(), ciudadano.getClave())) {
-            throw new CredencialesInvalidasException("Cuil o clave incorrectos");
+        if (!passwordEncoder.matches(request.clave(), usuario.clave())) {
+            throw new CredencialesInvalidasException(MENSAJE_CREDENCIALES_INVALIDAS);
         }
 
-        String token = jwtService.generarToken(ciudadano.getCuil(), ciudadano.getIdCiudadano(), PERFIL_CIUDADANO);
-        return LoginResponse.of(token, CiudadanoResponse.from(ciudadano), PERFIL_CIUDADANO);
+        String token = jwtService.generarToken(usuario.cuil(), usuario.idCiudadano(), PERFIL_CIUDADANO);
+        long expiraEn = jwtService.obtenerExpiracionSegundos();
+
+        return new LoginResponse(token, expiraEn, CiudadanoResponse.from(usuario));
     }
 }

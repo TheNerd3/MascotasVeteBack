@@ -29,8 +29,9 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(CredencialesInvalidasException.class)
-    public ResponseEntity<ErrorResponse> handleCredenciales(CredencialesInvalidasException ex, WebRequest request) {
-        return build(HttpStatus.UNAUTHORIZED, ex.getMessage(), request);
+    public ResponseEntity<ErrorLoginResponse> handleCredenciales(CredencialesInvalidasException ex) {
+        ErrorLoginResponse body = new ErrorLoginResponse(ex.getCodigo(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
     }
 
     @ExceptionHandler(AccessDeniedException.class)

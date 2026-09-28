@@ -1,5 +1,8 @@
 package ubp.das.backndvt.config;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -13,6 +16,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import ubp.das.backndvt.security.JwtAuthenticationFilter;
 
@@ -40,14 +46,37 @@ import ubp.das.backndvt.security.JwtAuthenticationFilter;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final String origenPermitido;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            @Value("${cors.origen-permitido}") String origenPermitido) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.origenPermitido = origenPermitido;
     }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    /**
+     * Permite que el frontend Angular, que corre en otro origen (otro
+     * puerto), pueda llamar a este backend desde el navegador. El
+     * origen permitido se configura con la variable de entorno
+     * CORS_ORIGEN_PERMITIDO, nunca queda fijo en el código.
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuracion = new CorsConfiguration();
+        configuracion.setAllowedOrigins(List.of(origenPermitido));
+        configuracion.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuracion.setAllowedHeaders(List.of("*"));
+        configuracion.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource fuenteConfiguracion = new UrlBasedCorsConfigurationSource();
+        fuenteConfiguracion.registerCorsConfiguration("/**", configuracion);
+        return fuenteConfiguracion;
     }
 
     /**
@@ -67,6 +96,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()

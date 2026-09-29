@@ -1,5 +1,7 @@
 package ubp.das.backndvt.controller;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -9,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import ubp.das.backndvt.dto.CiudadanoResponse;
+import ubp.das.backndvt.dto.MascotaResponse;
 import ubp.das.backndvt.security.AuthenticatedUser;
 import ubp.das.backndvt.service.CiudadanoService;
 
@@ -33,5 +36,13 @@ public class CiudadanoController {
             @PathVariable Integer id,
             @AuthenticationPrincipal AuthenticatedUser usuario) {
         return ResponseEntity.ok(ciudadanoService.buscarPorId(id));
+    }
+
+    @GetMapping("/{id}/mascotas")
+    @PreAuthorize("#usuario.idCiudadano() == #id")
+    public ResponseEntity<List<MascotaResponse>> listarMascotas(
+            @PathVariable Integer id,
+            @AuthenticationPrincipal AuthenticatedUser usuario) {
+        return ResponseEntity.ok(ciudadanoService.listarMascotas(id));
     }
 }

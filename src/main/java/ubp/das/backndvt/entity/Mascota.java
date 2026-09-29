@@ -22,7 +22,7 @@ public class Mascota {
     @Column(name = "nombre", nullable = false, length = 100)
     private String nombre;
 
-    @Column(name = "sexo", nullable = false, length = 1)
+    @Column(name = "sexo", nullable = false, length = 1, columnDefinition = "char(1)")
     private String sexo;
 
     @Column(name = "año_nacimiento")

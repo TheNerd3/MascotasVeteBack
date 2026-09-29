@@ -11,7 +11,8 @@ import org.springframework.stereotype.Repository;
  * Busca los datos de login de un ciudadano en la tabla `ciudadanos`,
  * usando JdbcTemplate con una consulta parametrizada (nunca se arma el
  * SQL concatenando texto, para no quedar expuestos a inyección SQL).
- * Implementa RF15.
+ * Implementa RF15, incluyendo la resolución del perfil (ciudadano,
+ * refugio o veterinaria) según con qué otras tablas está vinculado.
  */
 @Repository
 public class UsuarioRepository {
@@ -22,9 +23,6 @@ public class UsuarioRepository {
             fila.getString("nombre"),
             fila.getString("cuil"),
             fila.getString("clave"),
-            fila.getString("correo"),
-            fila.getString("telefono"),
-            fila.getString("domicilio"),
             fila.getBoolean("habilitado"));
 
     private final JdbcTemplate jdbcTemplate;
@@ -35,8 +33,7 @@ public class UsuarioRepository {
 
     public Optional<UsuarioLogin> buscarPorCuil(String cuil) {
         String sql = """
-                SELECT id_ciudadano, apellido, nombre, cuil, clave,
-                       correo, telefono, domicilio, habilitado
+                SELECT id_ciudadano, apellido, nombre, cuil, clave, habilitado
                 FROM ciudadanos
                 WHERE cuil = ?
                 """;
@@ -47,5 +44,25 @@ public class UsuarioRepository {
         } catch (EmptyResultDataAccessException ex) {
             return Optional.empty();
         }
+    }
+
+    // RF15 - perfil REFUGIO: el ciudadano es responsable de algun refugio
+    public Optional<Integer> buscarIdRefugioResponsable(Integer idCiudadano) {
+        String sql = "SELECT id_refugio FROM refugios WHERE id_responsable = ?";
+        return jdbcTemplate.query(sql, rs -> rs.next() ? Optional.of(rs.getInt("id_refugio")) : Optional.empty(),
+                idCiudadano);
+    }
+
+    // RF15 - perfil VETERINARIA: el ciudadano es profesional activo (sin baja)
+    // de alguna veterinaria
+    public Optional<Integer> buscarIdVeterinariaProfesional(Integer idCiudadano) {
+        String sql = """
+                SELECT id_veterinaria
+                FROM profesionales_veterinarias
+                WHERE id_profesional = ? AND baja = 0
+                """;
+        return jdbcTemplate.query(sql,
+                rs -> rs.next() ? Optional.of(rs.getInt("id_veterinaria")) : Optional.empty(),
+                idCiudadano);
     }
 }

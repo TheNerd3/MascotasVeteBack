@@ -44,27 +44,57 @@ class LocalAuthServiceTest {
 
     @Test
     void loginConCredencialesCorrectasDevuelveTokenYDatosDelUsuario() {
-        UsuarioLogin usuario = new UsuarioLogin(
-                1, "Perez", "Ana", CUIL_EXISTENTE, passwordEncoder.encode(CLAVE_CORRECTA),
-                "ana@correo.com", "3511234567", "Calle Falsa 123", true);
+        UsuarioLogin usuario = new UsuarioLogin(1, "Perez", "Ana", CUIL_EXISTENTE, passwordEncoder.encode(CLAVE_CORRECTA), true);
 
         when(usuarioRepository.buscarPorCuil(CUIL_EXISTENTE)).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.buscarIdRefugioResponsable(1)).thenReturn(Optional.empty());
+        when(usuarioRepository.buscarIdVeterinariaProfesional(1)).thenReturn(Optional.empty());
         when(jwtService.generarToken(CUIL_EXISTENTE, 1, "CIUDADANO")).thenReturn("token-simulado");
-        when(jwtService.obtenerExpiracionSegundos()).thenReturn(28800L);
 
         LoginResponse respuesta = authService.login(new LoginRequest(CUIL_EXISTENTE, CLAVE_CORRECTA));
 
         assertThat(respuesta.token()).isEqualTo("token-simulado");
-        assertThat(respuesta.expiraEn()).isEqualTo(28800L);
-        assertThat(respuesta.usuario().cuil()).isEqualTo(CUIL_EXISTENTE);
-        assertThat(respuesta.usuario().nombre()).isEqualTo("Ana");
+        assertThat(respuesta.idCiudadano()).isEqualTo(1);
+        assertThat(respuesta.nombre()).isEqualTo("Ana");
+        assertThat(respuesta.perfil()).isEqualTo("CIUDADANO");
+        assertThat(respuesta.idRefugio()).isNull();
+        assertThat(respuesta.idVeterinaria()).isNull();
+    }
+
+    @Test
+    void loginDeResponsableDeRefugioDevuelvePerfilRefugio() {
+        UsuarioLogin usuario = new UsuarioLogin(2, "Gomez", "Luis", CUIL_EXISTENTE, passwordEncoder.encode(CLAVE_CORRECTA), true);
+
+        when(usuarioRepository.buscarPorCuil(CUIL_EXISTENTE)).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.buscarIdRefugioResponsable(2)).thenReturn(Optional.of(5));
+        when(jwtService.generarToken(CUIL_EXISTENTE, 2, "REFUGIO")).thenReturn("token-simulado");
+
+        LoginResponse respuesta = authService.login(new LoginRequest(CUIL_EXISTENTE, CLAVE_CORRECTA));
+
+        assertThat(respuesta.perfil()).isEqualTo("REFUGIO");
+        assertThat(respuesta.idRefugio()).isEqualTo(5);
+        assertThat(respuesta.idVeterinaria()).isNull();
+    }
+
+    @Test
+    void loginDeProfesionalVeterinarioDevuelvePerfilVeterinaria() {
+        UsuarioLogin usuario = new UsuarioLogin(3, "Diaz", "Marta", CUIL_EXISTENTE, passwordEncoder.encode(CLAVE_CORRECTA), true);
+
+        when(usuarioRepository.buscarPorCuil(CUIL_EXISTENTE)).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.buscarIdRefugioResponsable(3)).thenReturn(Optional.empty());
+        when(usuarioRepository.buscarIdVeterinariaProfesional(3)).thenReturn(Optional.of(7));
+        when(jwtService.generarToken(CUIL_EXISTENTE, 3, "VETERINARIA")).thenReturn("token-simulado");
+
+        LoginResponse respuesta = authService.login(new LoginRequest(CUIL_EXISTENTE, CLAVE_CORRECTA));
+
+        assertThat(respuesta.perfil()).isEqualTo("VETERINARIA");
+        assertThat(respuesta.idVeterinaria()).isEqualTo(7);
+        assertThat(respuesta.idRefugio()).isNull();
     }
 
     @Test
     void loginConClaveIncorrectaRechazaConMensajeGenerico() {
-        UsuarioLogin usuario = new UsuarioLogin(
-                1, "Perez", "Ana", CUIL_EXISTENTE, passwordEncoder.encode(CLAVE_CORRECTA),
-                null, null, null, true);
+        UsuarioLogin usuario = new UsuarioLogin(1, "Perez", "Ana", CUIL_EXISTENTE, passwordEncoder.encode(CLAVE_CORRECTA), true);
 
         when(usuarioRepository.buscarPorCuil(CUIL_EXISTENTE)).thenReturn(Optional.of(usuario));
 
@@ -85,8 +115,7 @@ class LocalAuthServiceTest {
     @Test
     void loginConUsuarioDeshabilitadoRechazaAunqueLaClaveSeaCorrecta() {
         UsuarioLogin usuarioDeshabilitado = new UsuarioLogin(
-                1, "Perez", "Ana", CUIL_EXISTENTE, passwordEncoder.encode(CLAVE_CORRECTA),
-                null, null, null, false);
+                1, "Perez", "Ana", CUIL_EXISTENTE, passwordEncoder.encode(CLAVE_CORRECTA), false);
 
         when(usuarioRepository.buscarPorCuil(CUIL_EXISTENTE)).thenReturn(Optional.of(usuarioDeshabilitado));
 

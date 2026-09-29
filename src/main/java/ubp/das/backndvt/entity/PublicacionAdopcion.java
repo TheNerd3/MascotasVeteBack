@@ -37,11 +37,9 @@ public class PublicacionAdopcion {
     @Column(name = "fecha_publicacion", nullable = false)
     private LocalDate fechaPublicacion;
 
-    @Lob
     @Column(name = "caracteristicas_mascota")
     private String caracteristicasMascota;
 
-    @Lob
     @Column(name = "condicion_adopcion")
     private String condicionAdopcion;
 

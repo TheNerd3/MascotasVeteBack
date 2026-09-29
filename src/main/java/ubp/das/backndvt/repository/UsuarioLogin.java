@@ -12,8 +12,5 @@ public record UsuarioLogin(
         String nombre,
         String cuil,
         String clave,
-        String correo,
-        String telefono,
-        String domicilio,
         Boolean habilitado) {
 }

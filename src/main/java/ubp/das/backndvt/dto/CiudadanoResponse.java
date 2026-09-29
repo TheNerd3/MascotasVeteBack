@@ -1,7 +1,6 @@
 package ubp.das.backndvt.dto;
 
 import ubp.das.backndvt.entity.Ciudadano;
-import ubp.das.backndvt.repository.UsuarioLogin;
 
 /**
  * DTO de salida de ciudadano: nunca incluye "clave" (ni siquiera el hash).
@@ -26,17 +25,5 @@ public record CiudadanoResponse(
                 ciudadano.getTelefono(),
                 ciudadano.getDomicilio(),
                 ciudadano.getHabilitado());
-    }
-
-    public static CiudadanoResponse from(UsuarioLogin usuario) {
-        return new CiudadanoResponse(
-                usuario.idCiudadano(),
-                usuario.apellido(),
-                usuario.nombre(),
-                usuario.cuil(),
-                usuario.correo(),
-                usuario.telefono(),
-                usuario.domicilio(),
-                usuario.habilitado());
     }
 }

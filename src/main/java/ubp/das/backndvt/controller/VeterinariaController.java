@@ -19,7 +19,7 @@ import ubp.das.backndvt.service.VeterinariaService;
  */
 @RestController
 @RequestMapping("/veterinarias")
-@Tag(name = "RF17 - Veterinarias", description = "Listado publico de veterinarias habilitadas")
+@Tag(name = "4. RF17 - Veterinarias", description = "Listado publico de veterinarias habilitadas")
 public class VeterinariaController {
 
     private final VeterinariaService veterinariaService;

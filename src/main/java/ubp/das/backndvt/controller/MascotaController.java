@@ -32,7 +32,7 @@ import ubp.das.backndvt.service.MascotaService;
  */
 @RestController
 @RequestMapping("/mascotas")
-@Tag(name = "RF06/RF09/RF10/RF11 - Mascotas", description = "Alta, atenciones sanitarias y carnet sanitario digital")
+@Tag(name = "2. RF06/RF09/RF10/RF11 - Mascotas", description = "Alta, atenciones sanitarias y carnet sanitario digital")
 public class MascotaController {
 
     private final MascotaService mascotaService;

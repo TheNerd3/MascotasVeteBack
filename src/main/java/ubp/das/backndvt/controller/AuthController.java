@@ -23,7 +23,7 @@ import ubp.das.backndvt.service.AuthService;
  */
 @RestController
 @RequestMapping("/auth")
-@Tag(name = "RF15 - Login", description = "Autenticacion local contra ciudadanos.cuil/clave")
+@Tag(name = "1. RF15 - Login", description = "Autenticacion local contra ciudadanos.cuil/clave. Empeza por aca para sacar el token.")
 public class AuthController {
 
     private final AuthService authService;

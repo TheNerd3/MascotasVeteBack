@@ -18,7 +18,7 @@ import ubp.das.backndvt.repository.TipoAtencionSanitariaRepository;
  */
 @RestController
 @RequestMapping("/atenciones-sanitarias/tipos")
-@Tag(name = "Diagnostico", description = "Endpoint tecnico de verificacion de conexion a la base, no implementa ningun RF")
+@Tag(name = "9. Diagnostico", description = "Endpoint tecnico de verificacion de conexion a la base, no implementa ningun RF")
 public class AtencionSanitariaDiagnosticoController {
 
     private final TipoAtencionSanitariaRepository tipoAtencionSanitariaRepository;

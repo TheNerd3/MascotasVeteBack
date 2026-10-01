@@ -20,7 +20,7 @@ import ubp.das.backndvt.service.RefugioService;
  */
 @RestController
 @RequestMapping("/refugios")
-@Tag(name = "RF18 - Refugios", description = "Listado publico de refugios habilitados y sus publicaciones activas")
+@Tag(name = "5. RF18 - Refugios", description = "Listado publico de refugios habilitados y sus publicaciones activas")
 public class RefugioController {
 
     private final RefugioService refugioService;

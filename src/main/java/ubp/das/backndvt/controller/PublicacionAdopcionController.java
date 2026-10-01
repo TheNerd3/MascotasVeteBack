@@ -31,7 +31,7 @@ import ubp.das.backndvt.service.PublicacionAdopcionService;
  * autenticacion.
  */
 @RestController
-@Tag(name = "RF13/RF18 - Publicaciones de adopcion", description = "Alta y gestion de publicaciones, listado publico")
+@Tag(name = "3. RF13/RF18 - Publicaciones de adopcion", description = "Alta y gestion de publicaciones, listado publico")
 public class PublicacionAdopcionController {
 
     private final PublicacionAdopcionService publicacionAdopcionService;

@@ -25,7 +25,7 @@ import ubp.das.backndvt.service.CiudadanoService;
  */
 @RestController
 @RequestMapping("/ciudadanos")
-@Tag(name = "RF20 - Ciudadanos", description = "Datos propios del ciudadano autenticado y sus mascotas")
+@Tag(name = "6. RF20 - Ciudadanos", description = "Datos propios del ciudadano autenticado y sus mascotas")
 public class CiudadanoController {
 
     private final CiudadanoService ciudadanoService;

@@ -19,7 +19,7 @@ import ubp.das.backndvt.service.AsistenteVirtualService;
  */
 @RestController
 @RequestMapping("/asistente")
-@Tag(name = "RF21 - Asistente virtual", description = "Consulta de texto libre a un asistente virtual")
+@Tag(name = "8. RF21 - Asistente virtual", description = "Consulta de texto libre a un asistente virtual")
 public class AsistenteVirtualController {
 
     private final AsistenteVirtualService asistenteVirtualService;

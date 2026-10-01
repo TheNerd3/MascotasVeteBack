@@ -22,7 +22,7 @@ import ubp.das.backndvt.service.CarnetSanitarioService;
  */
 @RestController
 @RequestMapping("/carnet")
-@Tag(name = "RF11 - Validacion de carnet", description = "Validacion publica del carnet sanitario para terceros")
+@Tag(name = "7. RF11 - Validacion de carnet", description = "Validacion publica del carnet sanitario para terceros")
 public class CarnetController {
 
     private final CarnetSanitarioService carnetSanitarioService;

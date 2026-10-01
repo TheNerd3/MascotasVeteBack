@@ -3,6 +3,7 @@ package ubp.das.backndvt.service;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import ubp.das.backndvt.dto.PublicacionAdopcionResponse;
 import ubp.das.backndvt.dto.RefugioResponse;
@@ -26,6 +27,7 @@ public class RefugioService {
         this.publicacionAdopcionRepository = publicacionAdopcionRepository;
     }
 
+    @Transactional(readOnly = true)
     public List<RefugioResponse> listarHabilitados() {
         return refugioRepository.findByHabilitacionMunicipalIsNotNullAndHabilitacionMunicipalNot("").stream()
                 .map(this::conPublicacionesActivas)

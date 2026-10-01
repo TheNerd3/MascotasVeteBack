@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import ubp.das.backndvt.dto.AtencionCarnetResponse;
 import ubp.das.backndvt.dto.CarnetSanitarioResponse;
@@ -39,6 +40,7 @@ public class CarnetSanitarioService {
         this.carnetTokenService = carnetTokenService;
     }
 
+    @Transactional(readOnly = true)
     public CarnetSanitarioResponse obtenerCarnet(Integer nroRegMunicipal, Integer idCiudadanoAutenticado) {
         Mascota mascota = mascotaRepository.findById(nroRegMunicipal)
                 .orElseThrow(() -> new RecursoNoEncontradoException(

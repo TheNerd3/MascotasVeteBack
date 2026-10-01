@@ -95,6 +95,7 @@ public class PublicacionAdopcionService {
         return PublicacionAdopcionResponse.from(publicacionAdopcionRepository.save(publicacion));
     }
 
+    @Transactional(readOnly = true)
     public List<PublicacionAdopcionResponse> listarPorEstado(String estado) {
         List<PublicacionAdopcion> publicaciones = estado != null
                 ? publicacionAdopcionRepository.findByEstadoPublicacion(estado)

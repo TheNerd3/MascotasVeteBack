@@ -3,6 +3,7 @@ package ubp.das.backndvt.service;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import ubp.das.backndvt.dto.CiudadanoResponse;
 import ubp.das.backndvt.dto.MascotaResponse;
@@ -33,6 +34,7 @@ public class CiudadanoService {
         return CiudadanoResponse.from(ciudadano);
     }
 
+    @Transactional(readOnly = true)
     public List<MascotaResponse> listarMascotas(Integer idCiudadano) {
         obtenerOFallar(idCiudadano);
         return mascotaRepository.findByResponsableIdCiudadano(idCiudadano).stream()

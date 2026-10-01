@@ -39,6 +39,8 @@ import ubp.das.backndvt.security.JwtAuthenticationFilter;
  * - GET /carnet/validar (RF11, validacion de carnet para terceros)
  * - GET /atenciones-sanitarias/tipos/cantidad (endpoint de diagnostico
  *   de conexion, no expone datos sensibles)
+ * - Swagger UI y la especificacion OpenAPI (documentacion de la API,
+ *   no expone datos de negocio)
  */
 @Configuration
 @EnableWebSecurity
@@ -105,6 +107,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/publicaciones/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/carnet/validar").permitAll()
                         .requestMatchers(HttpMethod.GET, "/atenciones-sanitarias/tipos/cantidad").permitAll()
+                        .requestMatchers(
+                                "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

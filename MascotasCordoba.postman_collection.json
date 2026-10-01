@@ -1,0 +1,553 @@
+{
+  "info": {
+    "name": "Mascotas Cordoba",
+    "description": "Coleccion de pruebas end-to-end contra el backend de Mascotas Cordoba, usando datos-prueba.sql. Orden de ejecucion: RF15 -> RF17/18 -> RF06 -> RF09 -> RF10/11 -> RF13 -> RF20 -> RF21.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "RF15 - Login",
+      "item": [
+        {
+          "name": "Login exitoso (ciudadano)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('devuelve token y perfil CIUDADANO', () => {",
+              "  pm.expect(body.token).to.be.a('string').and.not.empty;",
+              "  pm.expect(body.perfil).to.eql('CIUDADANO');",
+              "  pm.expect(body.idCiudadano).to.eql(25);",
+              "});",
+              "pm.environment.set('token', body.token);",
+              "pm.environment.set('idCiudadano', body.idCiudadano);"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"cuil\": \"20123456786\",\n  \"clave\": \"Prueba123!\"\n}" }
+          }
+        },
+        {
+          "name": "Login exitoso (refugio)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('perfil REFUGIO con idRefugio', () => {",
+              "  pm.expect(body.perfil).to.eql('REFUGIO');",
+              "  pm.expect(body.idRefugio).to.not.be.null;",
+              "});",
+              "pm.environment.set('tokenRefugio', body.token);"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"cuil\": \"20345678906\",\n  \"clave\": \"Prueba123!\"\n}" }
+          }
+        },
+        {
+          "name": "Login exitoso (veterinaria)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('perfil VETERINARIA con idVeterinaria', () => {",
+              "  pm.expect(body.perfil).to.eql('VETERINARIA');",
+              "  pm.expect(body.idVeterinaria).to.not.be.null;",
+              "});",
+              "pm.environment.set('tokenVeterinaria', body.token);"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"cuil\": \"20567890121\",\n  \"clave\": \"Prueba123!\"\n}" }
+          }
+        },
+        {
+          "name": "Login con clave incorrecta (401)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('status 401', () => pm.response.to.have.status(401));"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"cuil\": \"20123456786\",\n  \"clave\": \"ClaveMala123\"\n}" }
+          }
+        },
+        {
+          "name": "Login de usuario deshabilitado (401)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('status 401', () => pm.response.to.have.status(401));"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"cuil\": \"23678901237\",\n  \"clave\": \"Prueba123!\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "RF17/18 - Veterinarias y Refugios",
+      "item": [
+        {
+          "name": "Listar veterinarias habilitadas",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('solo trae habilitadas', () => {",
+              "  pm.expect(body).to.be.an('array').with.lengthOf(3);",
+              "  pm.expect(body.map(v => v.razonSocial)).to.not.include('Veterinaria General Paz (no habilitada)');",
+              "});"
+            ]}
+          }],
+          "request": { "method": "GET", "url": "{{baseUrl}}/veterinarias" }
+        },
+        {
+          "name": "Listar refugios habilitados con publicaciones activas",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('solo trae habilitados', () => {",
+              "  pm.expect(body).to.be.an('array').with.lengthOf(2);",
+              "});",
+              "pm.test('refugio Huellitas trae sus publicaciones activas', () => {",
+              "  const huellitas = body.find(r => r.razonSocial === 'Refugio Huellitas Cordoba');",
+              "  pm.expect(huellitas.publicacionesActivas.length).to.eql(2);",
+              "});"
+            ]}
+          }],
+          "request": { "method": "GET", "url": "{{baseUrl}}/refugios" }
+        }
+      ]
+    },
+    {
+      "name": "RF06 - Registrar mascota",
+      "item": [
+        {
+          "name": "Registrar mascota nueva (201)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('status 201', () => pm.response.to.have.status(201));",
+              "const body = pm.response.json();",
+              "pm.test('devuelve nroRegMunicipal nuevo', () => {",
+              "  pm.expect(body.nroRegMunicipal).to.be.a('number');",
+              "});",
+              "pm.environment.set('nrmNuevo', body.nroRegMunicipal);"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/mascotas",
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Milo\",\n  \"sexo\": \"M\",\n  \"anioNacimiento\": 2024,\n  \"microchip\": \"900000000099001\",\n  \"idResponsable\": {{idCiudadano}},\n  \"caracteristicas\": [\n    { \"codRasgo\": 1, \"nroValorDominio\": 2, \"valor\": null },\n    { \"codRasgo\": 2, \"nroValorDominio\": 4, \"valor\": null },\n    { \"codRasgo\": 3, \"nroValorDominio\": 1, \"valor\": null }\n  ]\n}" }
+          }
+        },
+        {
+          "name": "Mascota duplicada por microchip (200, devuelve existente)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('devuelve la mascota existente (Rocky)', () => {",
+              "  pm.expect(body.nroRegMunicipal).to.eql(28);",
+              "  pm.expect(body.nombre).to.eql('Rocky');",
+              "});"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/mascotas",
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Rocky\",\n  \"sexo\": \"M\",\n  \"anioNacimiento\": 2021,\n  \"microchip\": \"900000000000001\",\n  \"idResponsable\": {{idCiudadano}},\n  \"caracteristicas\": []\n}" }
+          }
+        },
+        {
+          "name": "Registrar mascota sin token (403)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('status 403 (Spring Security sin JWT)', () => pm.response.to.have.status(403));"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/mascotas",
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"SinToken\",\n  \"sexo\": \"M\",\n  \"anioNacimiento\": 2024,\n  \"idResponsable\": {{idCiudadano}},\n  \"caracteristicas\": []\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "RF09 - Atencion sanitaria",
+      "item": [
+        {
+          "name": "Registrar atencion sanitaria (201)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('status 201', () => pm.response.to.have.status(201));",
+              "const body = pm.response.json();",
+              "pm.test('devuelve nroRegistro generado', () => {",
+              "  pm.expect(body.nroRegistro).to.be.a('number');",
+              "  pm.expect(body.nroRegMunicipal).to.eql(Number(pm.environment.get('nrm') || 28));",
+              "});"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/mascotas/28/atenciones",
+            "body": { "mode": "raw", "raw": "{\n  \"fechaAtencion\": \"2026-01-15\",\n  \"codTipoAtencion\": 1,\n  \"detalleAtencion\": \"Refuerzo antirrabica\",\n  \"fechaVencimiento\": \"2027-01-15\",\n  \"idVeterinaria\": {{idVeterinaria}},\n  \"idProfesional\": {{idProfesional}}\n}" }
+          }
+        },
+        {
+          "name": "Atencion con profesional dado de baja (404/400)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('rechaza (400 o 404)', () => {",
+              "  pm.expect([400,404]).to.include(pm.response.code);",
+              "});"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/mascotas/28/atenciones",
+            "body": { "mode": "raw", "raw": "{\n  \"fechaAtencion\": \"2026-01-15\",\n  \"codTipoAtencion\": 1,\n  \"detalleAtencion\": \"No deberia pasar\",\n  \"idVeterinaria\": {{idVeterinaria}},\n  \"idProfesional\": {{idProfesionalBaja}}\n}" }
+          }
+        },
+        {
+          "name": "Atencion sobre mascota inexistente (404)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('status 404', () => pm.response.to.have.status(404));"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/mascotas/999999/atenciones",
+            "body": { "mode": "raw", "raw": "{\n  \"fechaAtencion\": \"2026-01-15\",\n  \"codTipoAtencion\": 1,\n  \"idVeterinaria\": {{idVeterinaria}},\n  \"idProfesional\": {{idProfesional}}\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "RF10/11 - Carnet sanitario",
+      "item": [
+        {
+          "name": "Obtener carnet propio (200)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('trae atenciones y token de verificacion', () => {",
+              "  pm.expect(body.atenciones.length).to.be.greaterThan(0);",
+              "  pm.expect(body.tokenVerificacion).to.be.a('string').and.not.empty;",
+              "});",
+              "pm.environment.set('tokenCarnet', body.tokenVerificacion);"
+            ]}
+          }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/mascotas/28/carnet"
+          }
+        },
+        {
+          "name": "Carnet de una mascota que no es mia (403)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('status 403', () => pm.response.to.have.status(403));"
+            ]}
+          }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/mascotas/31/carnet"
+          }
+        },
+        {
+          "name": "Validar token de carnet (200, valido)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('token valido', () => pm.expect(body.valido).to.be.true);"
+            ]}
+          }],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/carnet/validar?token={{tokenCarnet}}"
+          }
+        },
+        {
+          "name": "Validar token de carnet invalido (200, invalido)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('token invalido', () => pm.expect(body.valido).to.be.false);"
+            ]}
+          }],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/carnet/validar?token=esto-no-es-un-token-valido"
+          }
+        }
+      ]
+    },
+    {
+      "name": "RF13 - Publicaciones de adopcion",
+      "item": [
+        {
+          "name": "Login refugio (para RF13)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "pm.environment.set('tokenRefugio', pm.response.json().token);"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"cuil\": \"20345678906\",\n  \"clave\": \"Prueba123!\"\n}" }
+          }
+        },
+        {
+          "name": "Crear publicacion para mascota existente (201)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('status 201', () => pm.response.to.have.status(201));",
+              "const body = pm.response.json();",
+              "pm.environment.set('nroPublicacion', body.nroPublicacion);",
+              "pm.test('estado Activa', () => pm.expect(body.estadoPublicacion).to.eql('Activa'));"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenRefugio}}" }
+            ],
+            "url": "{{baseUrl}}/refugios/{{idRefugio}}/publicaciones",
+            "body": { "mode": "raw", "raw": "{\n  \"nroRegMunicipal\": 34,\n  \"caracteristicasMascota\": \"Perro adulto tranquilo\",\n  \"condicionAdopcion\": \"Requiere seguimiento\"\n}" }
+          }
+        },
+        {
+          "name": "Publicacion activa duplicada (409)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('status 409', () => pm.response.to.have.status(409));"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenRefugio}}" }
+            ],
+            "url": "{{baseUrl}}/refugios/{{idRefugio}}/publicaciones",
+            "body": { "mode": "raw", "raw": "{\n  \"nroRegMunicipal\": 36,\n  \"caracteristicasMascota\": \"Bruno de nuevo\",\n  \"condicionAdopcion\": \"Prueba de duplicado\"\n}" }
+          }
+        },
+        {
+          "name": "Actualizar estado de publicacion (200)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('estado actualizado', () => pm.expect(body.estadoPublicacion).to.eql('Pausada'));"
+            ]}
+          }],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenRefugio}}" }
+            ],
+            "url": "{{baseUrl}}/publicaciones/{{nroPublicacionActiva}}",
+            "body": { "mode": "raw", "raw": "{\n  \"estadoPublicacion\": \"Pausada\"\n}" }
+          }
+        },
+        {
+          "name": "Listar publicaciones activas (publico)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('todas las devueltas estan Activa', () => {",
+              "  body.forEach(p => pm.expect(p.estadoPublicacion).to.eql('Activa'));",
+              "});"
+            ]}
+          }],
+          "request": { "method": "GET", "url": "{{baseUrl}}/publicaciones?estado=Activa" }
+        },
+        {
+          "name": "Crear publicacion sin ser el responsable del refugio (403)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('status 403', () => pm.response.to.have.status(403));"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/refugios/{{idRefugio}}/publicaciones",
+            "body": { "mode": "raw", "raw": "{\n  \"nroRegMunicipal\": 38,\n  \"caracteristicasMascota\": \"No deberia poder\",\n  \"condicionAdopcion\": \"Prueba 403\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "RF20 - Mis mascotas",
+      "item": [
+        {
+          "name": "Listar mis mascotas (200)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('trae las mascotas de Ana', () => {",
+              "  pm.expect(body.length).to.be.greaterThan(0);",
+              "  body.forEach(m => pm.expect(m.idResponsable).to.eql(Number(pm.environment.get('idCiudadano'))));",
+              "});"
+            ]}
+          }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/ciudadanos/{{idCiudadano}}/mascotas"
+          }
+        },
+        {
+          "name": "Mascotas de otro ciudadano (403)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('status 403', () => pm.response.to.have.status(403));"
+            ]}
+          }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/ciudadanos/{{idCiudadanoOtro}}/mascotas"
+          }
+        },
+        {
+          "name": "Mis mascotas sin token (403)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('status 403 (Spring Security sin JWT)', () => pm.response.to.have.status(403));"
+            ]}
+          }],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/ciudadanos/{{idCiudadano}}/mascotas"
+          }
+        }
+      ]
+    },
+    {
+      "name": "RF21 - Asistente virtual",
+      "item": [
+        {
+          "name": "Consultar asistente (200)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('devuelve una respuesta no vacia', () => {",
+              "  pm.expect(body.respuesta).to.be.a('string').and.not.empty;",
+              "});"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/asistente/consulta",
+            "body": { "mode": "raw", "raw": "{\n  \"consulta\": \"Como adopto una mascota en Cordoba?\"\n}" }
+          }
+        },
+        {
+          "name": "Consultar asistente sin token (403)",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('status 403 (Spring Security sin JWT)', () => pm.response.to.have.status(403));"
+            ]}
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/asistente/consulta",
+            "body": { "mode": "raw", "raw": "{\n  \"consulta\": \"Sin token\"\n}" }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+services:
+  # Backend de Mascotas Cordoba corriendo en Tomcat dentro de Docker.
+  # El SQL Server NO esta en este archivo: sigue instalado y
+  # administrado aparte, en la PC de quien lo ejecuta.
+  app-dev:
+    build: .
+    ports:
+      # El puerto 8085 de la PC se conecta al puerto 8080 del contenedor.
+      - "8085:8080"
+    environment:
+      # "host.docker.internal" es una direccion especial de Docker que
+      # apunta a la PC donde corre Docker. Dentro del contenedor,
+      # "localhost" seria el propio contenedor, no la PC: por eso no
+      # se puede usar localhost para llegar al SQL Server de la PC.
+      DB_HOST: host.docker.internal
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRACION: ${JWT_EXPIRACION}
+      CORS_ORIGEN_PERMITIDO: ${CORS_ORIGEN_PERMITIDO}

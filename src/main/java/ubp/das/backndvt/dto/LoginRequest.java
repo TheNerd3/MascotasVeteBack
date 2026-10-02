@@ -2,6 +2,7 @@ package ubp.das.backndvt.dto;
 
 import jakarta.validation.constraints.NotBlank;
 
+// RF15 - Autenticar usuarios
 public record LoginRequest(
 
         @NotBlank(message = "el cuil es obligatorio")

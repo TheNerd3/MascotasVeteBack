@@ -7,7 +7,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.Immutable;
 
@@ -39,11 +38,9 @@ public class Auditoria {
     @Column(name = "usuario_bd", nullable = false, length = 128)
     private String usuarioBd;
 
-    @Lob
     @Column(name = "datos_anteriores")
     private String datosAnteriores;
 
-    @Lob
     @Column(name = "datos_nuevos")
     private String datosNuevos;
 

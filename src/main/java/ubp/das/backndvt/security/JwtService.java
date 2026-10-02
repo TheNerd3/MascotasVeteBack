@@ -21,22 +21,25 @@ import io.jsonwebtoken.security.Keys;
  *
  * La clave con la que se firma el token viene de la variable de
  * entorno JWT_SECRET (nunca va escrita en el código), y debe tener al
- * menos 32 caracteres porque el algoritmo de firma lo exige.
+ * menos 32 caracteres porque el algoritmo de firma lo exige. La
+ * duración del token viene de JWT_EXPIRACION (en segundos).
  */
 @Service
 public class JwtService {
 
-    private static final long EXPIRACION_MS = 1000L * 60 * 60 * 8; // 8 horas
-
     private final SecretKey clave;
+    private final long expiracionSegundos;
 
-    public JwtService(@Value("${jwt.secret}") String secreto) {
+    public JwtService(
+            @Value("${jwt.secret}") String secreto,
+            @Value("${jwt.expiracion-segundos}") long expiracionSegundos) {
         this.clave = Keys.hmacShaKeyFor(secreto.getBytes());
+        this.expiracionSegundos = expiracionSegundos;
     }
 
     public String generarToken(String cuil, Integer idCiudadano, String perfil) {
         Date ahora = new Date();
-        Date expiracion = new Date(ahora.getTime() + EXPIRACION_MS);
+        Date expiracion = new Date(ahora.getTime() + expiracionSegundos * 1000);
 
         return Jwts.builder()
                 .subject(cuil)
@@ -47,6 +50,10 @@ public class JwtService {
                 .expiration(expiracion)
                 .signWith(clave)
                 .compact();
+    }
+
+    public long obtenerExpiracionSegundos() {
+        return expiracionSegundos;
     }
 
     public String extraerCuil(String token) {

@@ -76,6 +76,18 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+            <!-- El test etiquetado "integracion" (contextLoads) necesita un
+                 SQL Server real para que Hibernate valide el esquema
+                 (ddl-auto). Se excluye de "mvnw test" por defecto, asi el
+                 CI (sin base de datos disponible) no lo corre; se puede
+                 correr a mano con: mvnw test -Dgroups=integracion -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <excludedGroups>integracion</excludedGroups>
+                </configuration>
+            </plugin>
             <!-- Cobertura de tests: mide qué parte del código prueban los tests (lo usa SonarQube) -->
             <plugin>
                 <groupId>org.jacoco</groupId>

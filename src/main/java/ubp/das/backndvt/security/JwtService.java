@@ -38,14 +38,20 @@ public class JwtService {
     }
 
     public String generarToken(String cuil, Integer idCiudadano, String perfil) {
+        return generarToken(cuil, idCiudadano, perfil, null);
+    }
+
+    public String generarToken(String cuil, Integer idCiudadano, String perfil, Integer idRefugio) {
         Date ahora = new Date();
         Date expiracion = new Date(ahora.getTime() + expiracionSegundos * 1000);
 
+        Map<String, Object> claims = idRefugio == null
+                ? Map.of("idCiudadano", idCiudadano, "perfil", perfil)
+                : Map.of("idCiudadano", idCiudadano, "perfil", perfil, "idRefugio", idRefugio);
+
         return Jwts.builder()
                 .subject(cuil)
-                .claims(Map.of(
-                        "idCiudadano", idCiudadano,
-                        "perfil", perfil))
+                .claims(claims)
                 .issuedAt(ahora)
                 .expiration(expiracion)
                 .signWith(clave)
@@ -66,6 +72,10 @@ public class JwtService {
 
     public Integer extraerIdCiudadano(String token) {
         return extraerClaim(token, claims -> claims.get("idCiudadano", Integer.class));
+    }
+
+    public Integer extraerIdRefugio(String token) {
+        return extraerClaim(token, claims -> claims.get("idRefugio", Integer.class));
     }
 
     public boolean esValido(String token) {

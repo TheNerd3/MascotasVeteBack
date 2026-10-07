@@ -17,10 +17,6 @@ import jakarta.persistence.Table;
 @Table(name = "publicaciones_adopcion")
 public class PublicacionAdopcion {
 
-    public static final String ESTADO_ACTIVA = "Activa";
-    public static final String ESTADO_PAUSADA = "Pausada";
-    public static final String ESTADO_FINALIZADA = "Finalizada";
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "nro_publicacion")
@@ -48,7 +44,7 @@ public class PublicacionAdopcion {
     private byte[] foto;
 
     @Column(name = "estado_publicacion", nullable = false, length = 20)
-    private String estadoPublicacion = ESTADO_ACTIVA;
+    private EstadoPublicacion estadoPublicacion = EstadoPublicacion.ACTIVA;
 
     public Integer getNroPublicacion() {
         return nroPublicacion;
@@ -106,11 +102,11 @@ public class PublicacionAdopcion {
         this.foto = foto;
     }
 
-    public String getEstadoPublicacion() {
+    public EstadoPublicacion getEstadoPublicacion() {
         return estadoPublicacion;
     }
 
-    public void setEstadoPublicacion(String estadoPublicacion) {
+    public void setEstadoPublicacion(EstadoPublicacion estadoPublicacion) {
         this.estadoPublicacion = estadoPublicacion;
     }
 }

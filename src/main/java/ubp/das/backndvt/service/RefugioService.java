@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import ubp.das.backndvt.dto.PublicacionAdopcionResponse;
 import ubp.das.backndvt.dto.RefugioResponse;
-import ubp.das.backndvt.entity.PublicacionAdopcion;
+import ubp.das.backndvt.entity.EstadoPublicacion;
 import ubp.das.backndvt.entity.Refugio;
 import ubp.das.backndvt.repository.PublicacionAdopcionRepository;
 import ubp.das.backndvt.repository.RefugioRepository;
@@ -21,10 +21,15 @@ public class RefugioService {
 
     private final RefugioRepository refugioRepository;
     private final PublicacionAdopcionRepository publicacionAdopcionRepository;
+    private final PublicacionAdopcionService publicacionAdopcionService;
 
-    public RefugioService(RefugioRepository refugioRepository, PublicacionAdopcionRepository publicacionAdopcionRepository) {
+    public RefugioService(
+            RefugioRepository refugioRepository,
+            PublicacionAdopcionRepository publicacionAdopcionRepository,
+            PublicacionAdopcionService publicacionAdopcionService) {
         this.refugioRepository = refugioRepository;
         this.publicacionAdopcionRepository = publicacionAdopcionRepository;
+        this.publicacionAdopcionService = publicacionAdopcionService;
     }
 
     @Transactional(readOnly = true)
@@ -36,9 +41,10 @@ public class RefugioService {
 
     private RefugioResponse conPublicacionesActivas(Refugio refugio) {
         List<PublicacionAdopcionResponse> publicacionesActivas = publicacionAdopcionRepository
-                .findByRefugioIdRefugio(refugio.getIdRefugio()).stream()
-                .filter(publicacion -> PublicacionAdopcion.ESTADO_ACTIVA.equals(publicacion.getEstadoPublicacion()))
-                .map(PublicacionAdopcionResponse::from)
+                .findByRefugioIdRefugioAndEstadoPublicacionOrderByFechaPublicacionDesc(
+                        refugio.getIdRefugio(), EstadoPublicacion.ACTIVA)
+                .stream()
+                .map(publicacionAdopcionService::toResponse)
                 .toList();
         return RefugioResponse.from(refugio, publicacionesActivas);
     }

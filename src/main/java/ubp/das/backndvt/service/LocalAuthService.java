@@ -68,7 +68,7 @@ public class LocalAuthService implements AuthService {
                 : null;
 
         String perfil = resolverPerfil(idRefugio, idVeterinaria);
-        String token = jwtService.generarToken(usuario.cuil(), usuario.idCiudadano(), perfil);
+        String token = jwtService.generarToken(usuario.cuil(), usuario.idCiudadano(), perfil, idRefugio);
 
         return new LoginResponse(
                 token,

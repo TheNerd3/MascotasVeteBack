@@ -47,8 +47,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String cuil = jwtService.extraerCuil(token);
                 String perfil = jwtService.extraerPerfil(token);
                 Integer idCiudadano = jwtService.extraerIdCiudadano(token);
+                Integer idRefugio = jwtService.extraerIdRefugio(token);
 
-                AuthenticatedUser usuario = new AuthenticatedUser(idCiudadano, cuil, perfil);
+                AuthenticatedUser usuario = new AuthenticatedUser(idCiudadano, cuil, perfil, idRefugio);
 
                 var authentication = new UsernamePasswordAuthenticationToken(
                         usuario,

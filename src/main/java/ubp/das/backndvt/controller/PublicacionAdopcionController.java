@@ -3,6 +3,7 @@ package ubp.das.backndvt.controller;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import ubp.das.backndvt.dto.CambiarEstadoPublicacionRequest;
@@ -94,5 +96,32 @@ public class PublicacionAdopcionController {
             @AuthenticationPrincipal AuthenticatedUser usuario,
             Pageable pageable) {
         return ResponseEntity.ok(publicacionAdopcionService.listarMisPublicaciones(estado, usuario, pageable));
+    }
+
+    @GetMapping(value = "/{nroPublicacion}/foto", produces = MediaType.IMAGE_JPEG_VALUE)
+    @SecurityRequirements
+    @Operation(
+            summary = "Foto de una publicacion (RF18, endpoint publico)",
+            description = "Sin token: lo consume un <img src>, que no manda el header Authorization. Solo "
+                    + "devuelve la foto si la publicacion esta Activa (404 en cualquier otro caso), para no "
+                    + "exponer fotos de publicaciones Pausadas o Finalizadas a quien adivine el id.")
+    @ApiResponse(responseCode = "200", description = "Foto de la publicacion")
+    @ApiResponse(responseCode = "404", description = "No existe la publicacion, no esta Activa, o no tiene foto")
+    public ResponseEntity<byte[]> obtenerFotoPublica(@PathVariable Integer nroPublicacion) {
+        return ResponseEntity.ok(publicacionAdopcionService.obtenerFotoPublica(nroPublicacion));
+    }
+
+    @GetMapping(value = "/{nroPublicacion}/foto/propia", produces = MediaType.IMAGE_JPEG_VALUE)
+    @Operation(
+            summary = "Foto de una publicacion propia (RF13)",
+            description = "Requiere autenticacion: a diferencia del endpoint publico, devuelve la foto sin "
+                    + "importar el estado de la publicacion (Activa, Pausada o Finalizada), siempre que el "
+                    + "refugio autenticado sea el dueño.")
+    @ApiResponse(responseCode = "200", description = "Foto de la publicacion")
+    @ApiResponse(responseCode = "403", description = "El usuario autenticado no es el refugio dueño de la publicacion")
+    @ApiResponse(responseCode = "404", description = "No existe la publicacion, o no tiene foto")
+    public ResponseEntity<byte[]> obtenerFotoPropia(
+            @PathVariable Integer nroPublicacion, @AuthenticationPrincipal AuthenticatedUser usuario) {
+        return ResponseEntity.ok(publicacionAdopcionService.obtenerFotoPropia(nroPublicacion, usuario));
     }
 }

@@ -2,48 +2,15 @@ package ubp.das.backndvt.entity;
 
 import java.time.LocalDate;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-
-@Entity
-@Table(name = "publicaciones_adopcion")
 public class PublicacionAdopcion {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "nro_publicacion")
     private Integer nroPublicacion;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "nro_reg_municipal", nullable = false)
-    private Mascota mascota;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "id_refugio", nullable = false)
-    private Refugio refugio;
-
-    @Column(name = "fecha_publicacion", nullable = false)
+    private Integer nroRegMunicipal;
+    private Integer idRefugio;
     private LocalDate fechaPublicacion;
-
-    @Column(name = "caracteristicas_mascota")
     private String caracteristicasMascota;
-
-    @Column(name = "condicion_adopcion")
     private String condicionAdopcion;
-
-    @Lob
-    @Column(name = "foto")
     private byte[] foto;
-
-    @Column(name = "estado_publicacion", nullable = false, length = 20)
     private EstadoPublicacion estadoPublicacion = EstadoPublicacion.ACTIVA;
 
     public Integer getNroPublicacion() {
@@ -54,20 +21,20 @@ public class PublicacionAdopcion {
         this.nroPublicacion = nroPublicacion;
     }
 
-    public Mascota getMascota() {
-        return mascota;
+    public Integer getNroRegMunicipal() {
+        return nroRegMunicipal;
     }
 
-    public void setMascota(Mascota mascota) {
-        this.mascota = mascota;
+    public void setNroRegMunicipal(Integer nroRegMunicipal) {
+        this.nroRegMunicipal = nroRegMunicipal;
     }
 
-    public Refugio getRefugio() {
-        return refugio;
+    public Integer getIdRefugio() {
+        return idRefugio;
     }
 
-    public void setRefugio(Refugio refugio) {
-        this.refugio = refugio;
+    public void setIdRefugio(Integer idRefugio) {
+        this.idRefugio = idRefugio;
     }
 
     public LocalDate getFechaPublicacion() {

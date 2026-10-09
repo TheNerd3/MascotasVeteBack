@@ -1,7 +1,6 @@
 package ubp.das.backndvt.service;
 
 import java.time.LocalDate;
-import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,7 +13,6 @@ import ubp.das.backndvt.dto.CrearPublicacionAdopcionRequest;
 import ubp.das.backndvt.dto.PublicacionAdopcionResponse;
 import ubp.das.backndvt.dto.RegistrarMascotaRequest;
 import ubp.das.backndvt.dto.RegistrarMascotaResultado;
-import ubp.das.backndvt.entity.CaracteristicaMascota;
 import ubp.das.backndvt.entity.EstadoPublicacion;
 import ubp.das.backndvt.entity.Mascota;
 import ubp.das.backndvt.entity.PublicacionAdopcion;
@@ -22,7 +20,6 @@ import ubp.das.backndvt.entity.Refugio;
 import ubp.das.backndvt.exception.RecursoDuplicadoException;
 import ubp.das.backndvt.exception.RecursoNoEncontradoException;
 import ubp.das.backndvt.exception.TransicionEstadoInvalidaException;
-import ubp.das.backndvt.repository.CaracteristicaMascotaRepository;
 import ubp.das.backndvt.repository.MascotaRepository;
 import ubp.das.backndvt.repository.PublicacionAdopcionRepository;
 import ubp.das.backndvt.security.AuthenticatedUser;
@@ -43,26 +40,20 @@ import ubp.das.backndvt.security.RefugioAutorizacionService;
 @Service
 public class PublicacionAdopcionService {
 
-    private static final String RASGO_ESPECIE = "Especie";
-    private static final String RASGO_RAZA = "Raza";
-
     private final PublicacionAdopcionRepository publicacionAdopcionRepository;
     private final MascotaRepository mascotaRepository;
     private final MascotaService mascotaService;
     private final RefugioAutorizacionService refugioAutorizacionService;
-    private final CaracteristicaMascotaRepository caracteristicaMascotaRepository;
 
     public PublicacionAdopcionService(
             PublicacionAdopcionRepository publicacionAdopcionRepository,
             MascotaRepository mascotaRepository,
             MascotaService mascotaService,
-            RefugioAutorizacionService refugioAutorizacionService,
-            CaracteristicaMascotaRepository caracteristicaMascotaRepository) {
+            RefugioAutorizacionService refugioAutorizacionService) {
         this.publicacionAdopcionRepository = publicacionAdopcionRepository;
         this.mascotaRepository = mascotaRepository;
         this.mascotaService = mascotaService;
         this.refugioAutorizacionService = refugioAutorizacionService;
-        this.caracteristicaMascotaRepository = caracteristicaMascotaRepository;
     }
 
     @Transactional
@@ -75,15 +66,16 @@ public class PublicacionAdopcionService {
         validarSinPublicacionActiva(mascota.getNroRegMunicipal());
 
         PublicacionAdopcion publicacion = new PublicacionAdopcion();
-        publicacion.setMascota(mascota);
-        publicacion.setRefugio(refugio);
+        publicacion.setNroRegMunicipal(mascota.getNroRegMunicipal());
+        publicacion.setIdRefugio(refugio.getIdRefugio());
         publicacion.setFechaPublicacion(LocalDate.now());
         publicacion.setCaracteristicasMascota(request.caracteristicasMascota());
         publicacion.setCondicionAdopcion(request.condicionAdopcion());
         publicacion.setFoto(request.foto());
         publicacion.setEstadoPublicacion(EstadoPublicacion.ACTIVA);
 
-        return toResponse(publicacionAdopcionRepository.save(publicacion));
+        PublicacionAdopcion guardada = publicacionAdopcionRepository.save(publicacion);
+        return publicacionAdopcionRepository.findResponseById(guardada.getNroPublicacion()).orElseThrow();
     }
 
     @Transactional
@@ -94,7 +86,7 @@ public class PublicacionAdopcionService {
         PublicacionAdopcion publicacion = publicacionAdopcionRepository.findById(nroPublicacion)
                 .orElseThrow(() -> new RecursoNoEncontradoException("No existe una publicacion con nro " + nroPublicacion));
 
-        if (!publicacion.getRefugio().getIdRefugio().equals(refugio.getIdRefugio())) {
+        if (!publicacion.getIdRefugio().equals(refugio.getIdRefugio())) {
             throw new AccessDeniedException("Solo el refugio que publico puede cambiar su estado");
         }
 
@@ -108,46 +100,58 @@ public class PublicacionAdopcionService {
 
         EstadoPublicacion estadoDestino = accion.getEstadoDestino();
         if (estadoDestino == EstadoPublicacion.ACTIVA) {
-            validarSinPublicacionActiva(publicacion.getMascota().getNroRegMunicipal());
+            validarSinPublicacionActiva(publicacion.getNroRegMunicipal());
         }
 
         publicacion.setEstadoPublicacion(estadoDestino);
-        return toResponse(publicacionAdopcionRepository.save(publicacion));
+        publicacionAdopcionRepository.save(publicacion);
+        return publicacionAdopcionRepository.findResponseById(nroPublicacion).orElseThrow();
     }
 
     @Transactional(readOnly = true)
     public Page<PublicacionAdopcionResponse> listarMisPublicaciones(
             EstadoPublicacion estado, AuthenticatedUser usuario, Pageable pageable) {
         Refugio refugio = refugioAutorizacionService.refugioAutenticado(usuario);
-
-        Page<PublicacionAdopcion> publicaciones = estado != null
-                ? publicacionAdopcionRepository.findByRefugioIdRefugioAndEstadoPublicacion(refugio.getIdRefugio(), estado, pageable)
-                : publicacionAdopcionRepository.findByRefugioIdRefugio(refugio.getIdRefugio(), pageable);
-
-        return publicaciones.map(this::toResponse);
+        return publicacionAdopcionRepository.findByRefugio(refugio.getIdRefugio(), estado, pageable);
     }
 
     /**
-     * Arma el DTO de una publicacion resolviendo especie/raza de la
-     * mascota desde caracteristicas_mascotas. Publico porque
-     * RefugioService (RF18, listado publico) tambien arma este DTO.
+     * RF18 - Foto de una publicacion, endpoint publico (sin token: lo
+     * consume un <img src>, que no manda Authorization). Solo expone la
+     * foto si la publicacion esta Activa, para no mostrar fotos de
+     * publicaciones Pausadas/Finalizadas a cualquiera que adivine el id.
      */
-    public PublicacionAdopcionResponse toResponse(PublicacionAdopcion publicacion) {
-        List<CaracteristicaMascota> caracteristicas =
-                caracteristicaMascotaRepository.findByNroRegMunicipal(publicacion.getMascota().getNroRegMunicipal());
+    @Transactional(readOnly = true)
+    public byte[] obtenerFotoPublica(Integer nroPublicacion) {
+        String estado = publicacionAdopcionRepository.findEstado(nroPublicacion)
+                .orElseThrow(() -> new RecursoNoEncontradoException("No existe una publicacion con nro " + nroPublicacion));
 
-        String especie = valorDeRasgo(caracteristicas, RASGO_ESPECIE);
-        String raza = valorDeRasgo(caracteristicas, RASGO_RAZA);
+        if (!EstadoPublicacion.ACTIVA.getNombreEnBase().equals(estado)) {
+            throw new RecursoNoEncontradoException("La publicacion no esta activa");
+        }
 
-        return PublicacionAdopcionResponse.from(publicacion, especie, raza);
+        return publicacionAdopcionRepository.findFoto(nroPublicacion)
+                .orElseThrow(() -> new RecursoNoEncontradoException("La publicacion no tiene foto"));
     }
 
-    private String valorDeRasgo(List<CaracteristicaMascota> caracteristicas, String nombreRasgo) {
-        return caracteristicas.stream()
-                .filter(caracteristica -> nombreRasgo.equals(caracteristica.getDominioRasgo().getRasgo().getNomRasgo()))
-                .map(caracteristica -> caracteristica.getDominioRasgo().getNomValorDominio())
-                .findFirst()
-                .orElse(null);
+    /**
+     * RF13 - Foto de una publicacion, para el refugio dueño: a
+     * diferencia del endpoint publico (RF18), no filtra por estado
+     * Activa, porque el refugio tiene que poder ver la foto de sus
+     * publicaciones Pausadas y Finalizadas tambien.
+     */
+    @Transactional(readOnly = true)
+    public byte[] obtenerFotoPropia(Integer nroPublicacion, AuthenticatedUser usuario) {
+        Refugio refugio = refugioAutorizacionService.refugioAutenticado(usuario);
+        Integer idRefugioDeLaPublicacion = publicacionAdopcionRepository.findIdRefugioById(nroPublicacion)
+                .orElseThrow(() -> new RecursoNoEncontradoException("No existe una publicacion con nro " + nroPublicacion));
+
+        if (!idRefugioDeLaPublicacion.equals(refugio.getIdRefugio())) {
+            throw new AccessDeniedException("Solo el refugio que publico puede ver esta foto");
+        }
+
+        return publicacionAdopcionRepository.findFoto(nroPublicacion)
+                .orElseThrow(() -> new RecursoNoEncontradoException("La publicacion no tiene foto"));
     }
 
     private Mascota resolverMascota(CrearPublicacionAdopcionRequest request, Refugio refugio) {
@@ -191,8 +195,7 @@ public class PublicacionAdopcionService {
     }
 
     private void validarSinPublicacionActiva(Integer nroRegMunicipal) {
-        publicacionAdopcionRepository
-                .findByMascotaNroRegMunicipalAndEstadoPublicacion(nroRegMunicipal, EstadoPublicacion.ACTIVA)
+        publicacionAdopcionRepository.findActivaPorMascota(nroRegMunicipal)
                 .ifPresent(existente -> {
                     throw new RecursoDuplicadoException(
                             "La mascota " + nroRegMunicipal + " ya tiene una publicacion de adopcion activa");

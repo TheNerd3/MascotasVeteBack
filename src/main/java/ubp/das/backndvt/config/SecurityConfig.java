@@ -44,6 +44,10 @@ import ubp.das.backndvt.security.JwtAuthenticationFilter;
  * - GET /carnet/validar (RF11, validacion de carnet para terceros)
  * - GET /catalogos/** (especies y razas, listados de referencia para
  *   formularios, no datos de negocio)
+ * - GET /publicaciones/{id}/foto (RF18: la consume un <img src>, que no
+ *   manda Authorization; el propio endpoint devuelve 404 si la
+ *   publicacion no esta Activa, asi que no expone fotos de pausadas o
+ *   finalizadas igual)
  * - GET /atenciones-sanitarias/tipos/cantidad (endpoint de diagnostico
  *   de conexion, no expone datos sensibles)
  * - Swagger UI y la especificacion OpenAPI (documentacion de la API,
@@ -51,7 +55,9 @@ import ubp.das.backndvt.security.JwtAuthenticationFilter;
  *
  * GET/POST/PATCH /publicaciones (RF13, "mis publicaciones") requiere
  * autenticacion y perfil REFUGIO: no es lo mismo que el listado
- * publico de RF18, que vive en GET /refugios.
+ * publico de RF18, que vive en GET /refugios. Esto incluye
+ * /publicaciones/{id}/foto/propia (RF13, foto sin importar el estado,
+ * solo el refugio dueño).
  */
 @Configuration
 @EnableWebSecurity
@@ -120,6 +126,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/refugios/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/carnet/validar").permitAll()
                         .requestMatchers(HttpMethod.GET, "/catalogos/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/publicaciones/*/foto").permitAll()
                         .requestMatchers(HttpMethod.GET, "/atenciones-sanitarias/tipos/cantidad").permitAll()
                         .requestMatchers(
                                 "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()

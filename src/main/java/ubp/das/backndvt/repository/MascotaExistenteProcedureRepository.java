@@ -1,24 +1,48 @@
 package ubp.das.backndvt.repository;
 
+import java.util.List;
 import java.util.Optional;
 
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.NoResultException;
-import jakarta.persistence.ParameterMode;
-import jakarta.persistence.StoredProcedureQuery;
+import ubp.das.backndvt.entity.Ciudadano;
 import ubp.das.backndvt.entity.Mascota;
+import ubp.das.backndvt.entity.Refugio;
 
 // RF06 - Registrar mascotas: busca duplicados usando sp_BuscarMascotaExistente
 // (microchip prioritario; si no viene, cae a nombre + año_nacimiento + responsable).
 @Repository
 public class MascotaExistenteProcedureRepository {
 
-    private final EntityManager entityManager;
+    private static final RowMapper<Mascota> MAPEADOR = (fila, numeroFila) -> {
+        Ciudadano responsable = new Ciudadano();
+        responsable.setIdCiudadano(fila.getInt("id_responsable"));
 
-    public MascotaExistenteProcedureRepository(EntityManager entityManager) {
-        this.entityManager = entityManager;
+        Mascota mascota = new Mascota();
+        mascota.setNroRegMunicipal(fila.getInt("nro_reg_municipal"));
+        mascota.setNombre(fila.getString("nombre"));
+        mascota.setSexo(fila.getString("sexo"));
+        mascota.setAnioNacimiento(fila.getObject("año_nacimiento") != null ? fila.getShort("año_nacimiento") : null);
+        mascota.setMicrochip(fila.getString("microchip"));
+        mascota.setVive(fila.getBoolean("vive"));
+        mascota.setResponsable(responsable);
+        mascota.setUltimoNroAtencion(fila.getInt("ultimo_nro_atencion"));
+
+        Integer idRefugio = fila.getObject("id_refugio") != null ? fila.getInt("id_refugio") : null;
+        if (idRefugio != null) {
+            Refugio refugio = new Refugio();
+            refugio.setIdRefugio(idRefugio);
+            mascota.setRefugio(refugio);
+        }
+        return mascota;
+    };
+
+    private final JdbcTemplate jdbcTemplate;
+
+    public MascotaExistenteProcedureRepository(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     public Optional<Mascota> buscarExistente(
@@ -27,23 +51,11 @@ public class MascotaExistenteProcedureRepository {
             Integer idResponsable,
             String microchip) {
 
-        StoredProcedureQuery query = entityManager
-                .createStoredProcedureQuery("sp_BuscarMascotaExistente", Mascota.class)
-                .registerStoredProcedureParameter("nombre", String.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("anio_nacimiento", Short.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("id_responsable", Integer.class, ParameterMode.IN)
-                .registerStoredProcedureParameter("microchip", String.class, ParameterMode.IN)
-                .setParameter("nombre", nombre)
-                .setParameter("anio_nacimiento", anioNacimiento)
-                .setParameter("id_responsable", idResponsable)
-                .setParameter("microchip", microchip);
+        List<Mascota> resultado = jdbcTemplate.query(
+                "{call sp_BuscarMascotaExistente(?, ?, ?, ?)}",
+                MAPEADOR,
+                nombre, anioNacimiento, idResponsable, microchip);
 
-        try {
-            @SuppressWarnings("unchecked")
-            Mascota mascota = (Mascota) query.getSingleResult();
-            return Optional.ofNullable(mascota);
-        } catch (NoResultException ex) {
-            return Optional.empty();
-        }
+        return resultado.stream().findFirst();
     }
 }

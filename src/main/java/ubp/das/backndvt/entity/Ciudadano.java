@@ -1,43 +1,15 @@
 package ubp.das.backndvt.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-
-@Entity
-@Table(name = "ciudadanos")
 public class Ciudadano {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_ciudadano")
     private Integer idCiudadano;
-
-    @Column(name = "apellido", nullable = false, length = 100)
     private String apellido;
-
-    @Column(name = "nombre", nullable = false, length = 100)
     private String nombre;
-
-    @Column(name = "cuil", nullable = false, unique = true, length = 11)
     private String cuil;
-
-    @Column(name = "clave", nullable = false, length = 255)
     private String clave;
-
-    @Column(name = "correo", length = 150)
     private String correo;
-
-    @Column(name = "telefono", length = 20)
     private String telefono;
-
-    @Column(name = "domicilio", length = 200)
     private String domicilio;
-
-    @Column(name = "habilitado", nullable = false)
     private Boolean habilitado = true;
 
     public Integer getIdCiudadano() {

@@ -24,7 +24,6 @@ import ubp.das.backndvt.dto.RegistrarMascotaRequest;
 import ubp.das.backndvt.dto.RegistrarMascotaResultado;
 import ubp.das.backndvt.entity.Ciudadano;
 import ubp.das.backndvt.entity.DominioRasgoMascota;
-import ubp.das.backndvt.entity.DominioRasgoMascotaId;
 import ubp.das.backndvt.entity.Mascota;
 import ubp.das.backndvt.entity.RasgoMascota;
 import ubp.das.backndvt.exception.RecursoNoEncontradoException;
@@ -91,7 +90,7 @@ class MascotaServiceTest {
         when(ciudadanoRepository.findById(1)).thenReturn(Optional.of(responsable));
         when(mascotaExistenteProcedureRepository.buscarExistente(anyString(), any(), anyInt(), any()))
                 .thenReturn(Optional.empty());
-        when(dominioRasgoMascotaRepository.findById(new DominioRasgoMascotaId(1, 2)))
+        when(dominioRasgoMascotaRepository.findById(1, 2))
                 .thenReturn(Optional.of(valorDominio));
         when(mascotaRepository.findByMicrochip(any())).thenReturn(Optional.empty());
         when(mascotaRepository.save(any())).thenReturn(guardada);
@@ -166,7 +165,7 @@ class MascotaServiceTest {
         when(ciudadanoRepository.findById(1)).thenReturn(Optional.of(responsable));
         when(mascotaExistenteProcedureRepository.buscarExistente(anyString(), any(), anyInt(), any()))
                 .thenReturn(Optional.empty());
-        when(dominioRasgoMascotaRepository.findById(new DominioRasgoMascotaId(99, 1))).thenReturn(Optional.empty());
+        when(dominioRasgoMascotaRepository.findById(99, 1)).thenReturn(Optional.empty());
 
         RegistrarMascotaRequest request = new RegistrarMascotaRequest(
                 "Firulais", "M", (short) 2020, null, 1, null, null,

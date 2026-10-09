@@ -2,62 +2,17 @@ package ubp.das.backndvt.entity;
 
 import java.time.LocalDate;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.IdClass;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinColumns;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-
-/**
- * Nota: nro_registro es un correlativo por mascota generado de forma
- * atomica en la base con el stored procedure
- * sp_InsertarInformacionSanitaria (contador en mascotas.ultimo_nro_atencion).
- * No usar @GeneratedValue aca: el numero se calcula del lado de la base.
- */
-@Entity
-@Table(name = "informacion_sanitaria")
-@IdClass(InformacionSanitariaId.class)
 public class InformacionSanitaria {
 
-    @Id
-    @Column(name = "nro_reg_municipal")
     private Integer nroRegMunicipal;
-
-    @Id
-    @Column(name = "nro_registro")
     private Integer nroRegistro;
-
-    @Column(name = "fecha_atencion", nullable = false)
     private LocalDate fechaAtencion;
-
-    @Column(name = "cod_tipo_atencion", nullable = false)
     private Integer codTipoAtencion;
-
-    @Column(name = "detalle_atencion")
     private String detalleAtencion;
-
-    @Column(name = "fecha_vencimiento")
     private LocalDate fechaVencimiento;
-
-    @Column(name = "id_veterinaria", nullable = false)
     private Integer idVeterinaria;
-
-    @Column(name = "id_profesional", nullable = false)
     private Integer idProfesional;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "cod_tipo_atencion", insertable = false, updatable = false)
     private TipoAtencionSanitaria tipoAtencion;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumns({
-            @JoinColumn(name = "id_veterinaria", referencedColumnName = "id_veterinaria", insertable = false, updatable = false),
-            @JoinColumn(name = "id_profesional", referencedColumnName = "id_profesional", insertable = false, updatable = false)
-    })
     private ProfesionalVeterinaria profesionalVeterinaria;
 
     public Integer getNroRegMunicipal() {

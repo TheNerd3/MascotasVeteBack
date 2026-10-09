@@ -7,7 +7,6 @@ import ubp.das.backndvt.dto.AtencionSanitariaResponse;
 import ubp.das.backndvt.dto.RegistrarAtencionSanitariaRequest;
 import ubp.das.backndvt.entity.Mascota;
 import ubp.das.backndvt.entity.ProfesionalVeterinaria;
-import ubp.das.backndvt.entity.ProfesionalVeterinariaId;
 import ubp.das.backndvt.entity.Veterinaria;
 import ubp.das.backndvt.exception.RecursoNoEncontradoException;
 import ubp.das.backndvt.repository.InformacionSanitariaProcedureRepository;
@@ -66,7 +65,7 @@ public class AtencionSanitariaService {
         }
 
         ProfesionalVeterinaria profesional = profesionalVeterinariaRepository
-                .findById(new ProfesionalVeterinariaId(request.idVeterinaria(), request.idProfesional()))
+                .findById(request.idVeterinaria(), request.idProfesional())
                 .orElseThrow(() -> new RecursoNoEncontradoException(
                         "El profesional " + request.idProfesional()
                                 + " no está vinculado a la veterinaria " + request.idVeterinaria()));

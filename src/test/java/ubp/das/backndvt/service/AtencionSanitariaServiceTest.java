@@ -16,7 +16,6 @@ import ubp.das.backndvt.dto.AtencionSanitariaResponse;
 import ubp.das.backndvt.dto.RegistrarAtencionSanitariaRequest;
 import ubp.das.backndvt.entity.Mascota;
 import ubp.das.backndvt.entity.ProfesionalVeterinaria;
-import ubp.das.backndvt.entity.ProfesionalVeterinariaId;
 import ubp.das.backndvt.entity.TipoAtencionSanitaria;
 import ubp.das.backndvt.entity.Veterinaria;
 import ubp.das.backndvt.exception.RecursoNoEncontradoException;
@@ -86,7 +85,7 @@ class AtencionSanitariaServiceTest {
         profesional.setIdVeterinaria(ID_VETERINARIA);
         profesional.setIdProfesional(ID_PROFESIONAL);
         profesional.setBaja(false);
-        when(profesionalVeterinariaRepository.findById(new ProfesionalVeterinariaId(ID_VETERINARIA, ID_PROFESIONAL)))
+        when(profesionalVeterinariaRepository.findById(ID_VETERINARIA, ID_PROFESIONAL))
                 .thenReturn(Optional.of(profesional));
     }
 
@@ -145,7 +144,7 @@ class AtencionSanitariaServiceTest {
 
         ProfesionalVeterinaria profesionalDeBaja = new ProfesionalVeterinaria();
         profesionalDeBaja.setBaja(true);
-        when(profesionalVeterinariaRepository.findById(new ProfesionalVeterinariaId(ID_VETERINARIA, ID_PROFESIONAL)))
+        when(profesionalVeterinariaRepository.findById(ID_VETERINARIA, ID_PROFESIONAL))
                 .thenReturn(Optional.of(profesionalDeBaja));
 
         assertThatThrownBy(() -> atencionSanitariaService.registrar(NRM, requestValido()))

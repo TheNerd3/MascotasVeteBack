@@ -2,73 +2,75 @@ package ubp.das.backndvt.entity;
 
 import java.time.LocalDateTime;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import org.hibernate.annotations.Immutable;
-
 /**
- * Entidad de solo lectura sobre la tabla de auditoria generica que llenan
- * los triggers TR_*_Audit (ver script de auditoria de MascotasCordoba).
+ * Representa una fila de la tabla de auditoria generica que llenan los
+ * triggers TR_*_Audit (ver script de auditoria de MascotasCordoba).
  * Nunca se debe insertar/actualizar/borrar desde la aplicacion: eso lo
- * hace la base de datos sola via triggers.
+ * hace la base de datos sola via triggers, nunca codigo Java.
  */
-@Entity
-@Immutable
-@Table(name = "auditoria")
 public class Auditoria {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_auditoria")
     private Long idAuditoria;
-
-    @Column(name = "nombre_tabla", nullable = false, length = 100)
     private String nombreTabla;
-
-    @Column(name = "operacion", nullable = false, length = 10)
     private String operacion;
-
-    @Column(name = "fecha_operacion", nullable = false)
     private LocalDateTime fechaOperacion;
-
-    @Column(name = "usuario_bd", nullable = false, length = 128)
     private String usuarioBd;
-
-    @Column(name = "datos_anteriores")
     private String datosAnteriores;
-
-    @Column(name = "datos_nuevos")
     private String datosNuevos;
 
     public Long getIdAuditoria() {
         return idAuditoria;
     }
 
+    public void setIdAuditoria(Long idAuditoria) {
+        this.idAuditoria = idAuditoria;
+    }
+
     public String getNombreTabla() {
         return nombreTabla;
+    }
+
+    public void setNombreTabla(String nombreTabla) {
+        this.nombreTabla = nombreTabla;
     }
 
     public String getOperacion() {
         return operacion;
     }
 
+    public void setOperacion(String operacion) {
+        this.operacion = operacion;
+    }
+
     public LocalDateTime getFechaOperacion() {
         return fechaOperacion;
+    }
+
+    public void setFechaOperacion(LocalDateTime fechaOperacion) {
+        this.fechaOperacion = fechaOperacion;
     }
 
     public String getUsuarioBd() {
         return usuarioBd;
     }
 
+    public void setUsuarioBd(String usuarioBd) {
+        this.usuarioBd = usuarioBd;
+    }
+
     public String getDatosAnteriores() {
         return datosAnteriores;
     }
 
+    public void setDatosAnteriores(String datosAnteriores) {
+        this.datosAnteriores = datosAnteriores;
+    }
+
     public String getDatosNuevos() {
         return datosNuevos;
+    }
+
+    public void setDatosNuevos(String datosNuevos) {
+        this.datosNuevos = datosNuevos;
     }
 }

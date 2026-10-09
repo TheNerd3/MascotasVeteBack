@@ -41,21 +41,24 @@
             <artifactId>spring-boot-starter-webmvc</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
-        </dependency>
-
-        <!-- Acceso directo a la base con JdbcTemplate y SQL parametrizado.
-             Se usa para el login (UsuarioRepository), siguiendo el enfoque
-             visto en la materia; el resto del backend sigue usando JPA. -->
+        <!-- Acceso a la base con JdbcTemplate y SQL parametrizado (y
+             stored procedures via JdbcTemplate.queryForObject con
+             "{call sp_...}"), siguiendo el enfoque visto en la materia.
+             No se usa JPA/Hibernate en ningun punto del backend. -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-jdbc</artifactId>
         </dependency>
 
-        <!-- Driver que permite a Java conectarse a SQL Server, tanto para
-             JPA como para JdbcTemplate. -->
+        <!-- Solo para Page/Pageable/PageImpl (paginado de GET /publicaciones):
+             no trae JPA ni ningun otro modulo de persistencia, a diferencia
+             de spring-boot-starter-data-jpa. -->
+        <dependency>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-commons</artifactId>
+        </dependency>
+
+        <!-- Driver que permite a Java conectarse a SQL Server via JdbcTemplate. -->
         <dependency>
             <groupId>com.microsoft.sqlserver</groupId>
             <artifactId>mssql-jdbc</artifactId>

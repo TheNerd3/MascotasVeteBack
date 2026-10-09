@@ -29,10 +29,6 @@ public class ProfesionalVeterinaria {
     @JoinColumn(name = "id_veterinaria", insertable = false, updatable = false)
     private Veterinaria veterinaria;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "id_profesional", insertable = false, updatable = false)
-    private Ciudadano profesional;
-
     public Integer getIdVeterinaria() {
         return idVeterinaria;
     }
@@ -65,11 +61,4 @@ public class ProfesionalVeterinaria {
         this.veterinaria = veterinaria;
     }
 
-    public Ciudadano getProfesional() {
-        return profesional;
-    }
-
-    public void setProfesional(Ciudadano profesional) {
-        this.profesional = profesional;
-    }
 }

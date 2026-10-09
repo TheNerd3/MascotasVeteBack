@@ -1,7 +1,10 @@
 package ubp.das.backndvt.entity;
 
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
  * RF13 - Estados de una publicacion de adopcion y sus transiciones
@@ -22,8 +25,21 @@ public enum EstadoPublicacion {
         this.nombreEnBase = nombreEnBase;
     }
 
+    @JsonValue
     public String getNombreEnBase() {
         return nombreEnBase;
+    }
+
+    /**
+     * Convierte el texto guardado en estado_publicacion ("Activa",
+     * "Pausada", "Finalizada") al enum. Reemplaza al converter JPA que
+     * ya no hace falta sin Hibernate manejando esta entidad.
+     */
+    public static EstadoPublicacion desdeNombreEnBase(String nombreEnBase) {
+        return Arrays.stream(values())
+                .filter(estado -> estado.getNombreEnBase().equals(nombreEnBase))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Estado de publicacion desconocido: " + nombreEnBase));
     }
 
     /**

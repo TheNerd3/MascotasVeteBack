@@ -13,7 +13,6 @@ import ubp.das.backndvt.dto.RegistrarMascotaRequest;
 import ubp.das.backndvt.dto.RegistrarMascotaResultado;
 import ubp.das.backndvt.entity.Ciudadano;
 import ubp.das.backndvt.entity.DominioRasgoMascota;
-import ubp.das.backndvt.entity.DominioRasgoMascotaId;
 import ubp.das.backndvt.entity.Mascota;
 import ubp.das.backndvt.entity.Refugio;
 import ubp.das.backndvt.exception.RecursoNoEncontradoException;
@@ -136,9 +135,9 @@ public class MascotaService {
 
     private void validarRasgos(List<CaracteristicaMascotaRequest> caracteristicas) {
         for (CaracteristicaMascotaRequest caracteristica : caracteristicas) {
-            DominioRasgoMascotaId id = new DominioRasgoMascotaId(caracteristica.codRasgo(), caracteristica.nroValorDominio());
-            DominioRasgoMascota valorDominio = dominioRasgoMascotaRepository.findById(id).orElseThrow(
-                    () -> new RecursoNoEncontradoException(
+            DominioRasgoMascota valorDominio = dominioRasgoMascotaRepository
+                    .findById(caracteristica.codRasgo(), caracteristica.nroValorDominio())
+                    .orElseThrow(() -> new RecursoNoEncontradoException(
                             "El valor de dominio " + caracteristica.nroValorDominio()
                                     + " no existe para el rasgo " + caracteristica.codRasgo()));
             if (!valorDominio.getRasgo().getCodRasgo().equals(caracteristica.codRasgo())) {

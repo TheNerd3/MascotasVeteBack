@@ -50,10 +50,6 @@ public class InformacionSanitaria {
     private Integer idProfesional;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "nro_reg_municipal", insertable = false, updatable = false)
-    private Mascota mascota;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "cod_tipo_atencion", insertable = false, updatable = false)
     private TipoAtencionSanitaria tipoAtencion;
 
@@ -126,14 +122,6 @@ public class InformacionSanitaria {
 
     public void setIdProfesional(Integer idProfesional) {
         this.idProfesional = idProfesional;
-    }
-
-    public Mascota getMascota() {
-        return mascota;
-    }
-
-    public void setMascota(Mascota mascota) {
-        this.mascota = mascota;
     }
 
     public TipoAtencionSanitaria getTipoAtencion() {

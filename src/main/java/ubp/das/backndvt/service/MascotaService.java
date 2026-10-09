@@ -16,7 +16,6 @@ import ubp.das.backndvt.entity.DominioRasgoMascota;
 import ubp.das.backndvt.entity.DominioRasgoMascotaId;
 import ubp.das.backndvt.entity.Mascota;
 import ubp.das.backndvt.entity.Refugio;
-import ubp.das.backndvt.exception.RecursoDuplicadoException;
 import ubp.das.backndvt.exception.RecursoNoEncontradoException;
 import ubp.das.backndvt.repository.CaracteristicaMascotaProcedureRepository;
 import ubp.das.backndvt.repository.CiudadanoRepository;
@@ -85,7 +84,7 @@ public class MascotaService {
         mascota.setResponsable(responsable);
         mascota.setRefugio(resolverRefugio(request.idRefugio()));
 
-        Mascota guardada = guardarMascotaSinChoqueDeMicrochip(mascota);
+        Mascota guardada = mascotaRepository.save(mascota);
 
         for (CaracteristicaMascotaRequest caracteristica : request.caracteristicas()) {
             caracteristicaMascotaProcedureRepository.insertarCaracteristicaMascota(
@@ -146,13 +145,5 @@ public class MascotaService {
                 throw new RecursoNoEncontradoException("El rasgo " + caracteristica.codRasgo() + " no existe");
             }
         }
-    }
-
-    private Mascota guardarMascotaSinChoqueDeMicrochip(Mascota mascota) {
-        if (mascota.getMicrochip() != null && mascotaRepository.findByMicrochip(mascota.getMicrochip()).isPresent()) {
-            throw new RecursoDuplicadoException(
-                    "Ya existe una mascota registrada con el microchip " + mascota.getMicrochip());
-        }
-        return mascotaRepository.save(mascota);
     }
 }

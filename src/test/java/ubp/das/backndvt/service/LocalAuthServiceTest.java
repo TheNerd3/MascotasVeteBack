@@ -49,7 +49,7 @@ class LocalAuthServiceTest {
         when(usuarioRepository.buscarPorCuil(CUIL_EXISTENTE)).thenReturn(Optional.of(usuario));
         when(usuarioRepository.buscarIdRefugioResponsable(1)).thenReturn(Optional.empty());
         when(usuarioRepository.buscarIdVeterinariaProfesional(1)).thenReturn(Optional.empty());
-        when(jwtService.generarToken(CUIL_EXISTENTE, 1, "CIUDADANO")).thenReturn("token-simulado");
+        when(jwtService.generarToken(CUIL_EXISTENTE, 1, "CIUDADANO", null)).thenReturn("token-simulado");
 
         LoginResponse respuesta = authService.login(new LoginRequest(CUIL_EXISTENTE, CLAVE_CORRECTA));
 
@@ -67,7 +67,7 @@ class LocalAuthServiceTest {
 
         when(usuarioRepository.buscarPorCuil(CUIL_EXISTENTE)).thenReturn(Optional.of(usuario));
         when(usuarioRepository.buscarIdRefugioResponsable(2)).thenReturn(Optional.of(5));
-        when(jwtService.generarToken(CUIL_EXISTENTE, 2, "REFUGIO")).thenReturn("token-simulado");
+        when(jwtService.generarToken(CUIL_EXISTENTE, 2, "REFUGIO", 5)).thenReturn("token-simulado");
 
         LoginResponse respuesta = authService.login(new LoginRequest(CUIL_EXISTENTE, CLAVE_CORRECTA));
 
@@ -83,7 +83,7 @@ class LocalAuthServiceTest {
         when(usuarioRepository.buscarPorCuil(CUIL_EXISTENTE)).thenReturn(Optional.of(usuario));
         when(usuarioRepository.buscarIdRefugioResponsable(3)).thenReturn(Optional.empty());
         when(usuarioRepository.buscarIdVeterinariaProfesional(3)).thenReturn(Optional.of(7));
-        when(jwtService.generarToken(CUIL_EXISTENTE, 3, "VETERINARIA")).thenReturn("token-simulado");
+        when(jwtService.generarToken(CUIL_EXISTENTE, 3, "VETERINARIA", null)).thenReturn("token-simulado");
 
         LoginResponse respuesta = authService.login(new LoginRequest(CUIL_EXISTENTE, CLAVE_CORRECTA));
 

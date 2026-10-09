@@ -27,7 +27,6 @@ import ubp.das.backndvt.entity.DominioRasgoMascota;
 import ubp.das.backndvt.entity.DominioRasgoMascotaId;
 import ubp.das.backndvt.entity.Mascota;
 import ubp.das.backndvt.entity.RasgoMascota;
-import ubp.das.backndvt.exception.RecursoDuplicadoException;
 import ubp.das.backndvt.exception.RecursoNoEncontradoException;
 import ubp.das.backndvt.repository.CaracteristicaMascotaProcedureRepository;
 import ubp.das.backndvt.repository.CiudadanoRepository;
@@ -177,23 +176,4 @@ class MascotaServiceTest {
                 .isInstanceOf(RecursoNoEncontradoException.class);
     }
 
-    @Test
-    void registrarConMicrochipYaUsadoRechazaConRecursoDuplicado() {
-        Ciudadano responsable = new Ciudadano();
-        responsable.setIdCiudadano(1);
-
-        Mascota otraMascota = new Mascota();
-        otraMascota.setNroRegMunicipal(99);
-
-        when(ciudadanoRepository.findById(1)).thenReturn(Optional.of(responsable));
-        when(mascotaExistenteProcedureRepository.buscarExistente(anyString(), any(), anyInt(), any()))
-                .thenReturn(Optional.empty());
-        when(mascotaRepository.findByMicrochip("CHIP-123")).thenReturn(Optional.of(otraMascota));
-
-        RegistrarMascotaRequest request = new RegistrarMascotaRequest(
-                "Firulais", "M", (short) 2020, "CHIP-123", 1, null, null, List.of());
-
-        assertThatThrownBy(() -> mascotaService.registrar(request))
-                .isInstanceOf(RecursoDuplicadoException.class);
-    }
 }

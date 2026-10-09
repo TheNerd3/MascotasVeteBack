@@ -13,24 +13,42 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 
-import ubp.das.backndvt.dto.ActualizarPublicacionAdopcionRequest;
+import ubp.das.backndvt.dto.CambiarEstadoPublicacionRequest;
 import ubp.das.backndvt.dto.CrearPublicacionAdopcionRequest;
+import ubp.das.backndvt.dto.DatosPropietarioRequest;
+import ubp.das.backndvt.dto.MascotaResponse;
 import ubp.das.backndvt.dto.PublicacionAdopcionResponse;
+import ubp.das.backndvt.dto.RegistrarMascotaRequest;
+import ubp.das.backndvt.dto.RegistrarMascotaResultado;
 import ubp.das.backndvt.entity.Ciudadano;
+import ubp.das.backndvt.entity.EstadoPublicacion;
+import ubp.das.backndvt.entity.EstadoPublicacion.Accion;
 import ubp.das.backndvt.entity.Mascota;
 import ubp.das.backndvt.entity.PublicacionAdopcion;
 import ubp.das.backndvt.entity.Refugio;
 import ubp.das.backndvt.exception.RecursoDuplicadoException;
 import ubp.das.backndvt.exception.RecursoNoEncontradoException;
+import ubp.das.backndvt.exception.TransicionEstadoInvalidaException;
+import ubp.das.backndvt.repository.CaracteristicaMascotaRepository;
 import ubp.das.backndvt.repository.MascotaRepository;
 import ubp.das.backndvt.repository.PublicacionAdopcionRepository;
 import ubp.das.backndvt.repository.RefugioRepository;
+import ubp.das.backndvt.security.AuthenticatedUser;
+import ubp.das.backndvt.security.RefugioAutorizacionService;
 
 /**
  * Pruebas de PublicacionAdopcionService (RF13) con los repositorios
- * simulados (mock): no necesitan SQL Server para correr.
+ * simulados (mock): no necesitan SQL Server para correr. El refugio
+ * del usuario autenticado se resuelve siempre a traves de
+ * RefugioAutorizacionService (no se mockea aca con un mock generico:
+ * se usa la implementacion real contra un RefugioRepository mockeado,
+ * para probar la integracion real entre ambos).
  */
 class PublicacionAdopcionServiceTest {
 
@@ -42,6 +60,8 @@ class PublicacionAdopcionServiceTest {
     private MascotaRepository mascotaRepository;
     private RefugioRepository refugioRepository;
     private MascotaService mascotaService;
+    private RefugioAutorizacionService refugioAutorizacionService;
+    private CaracteristicaMascotaRepository caracteristicaMascotaRepository;
     private PublicacionAdopcionService publicacionAdopcionService;
 
     @BeforeEach
@@ -50,9 +70,13 @@ class PublicacionAdopcionServiceTest {
         mascotaRepository = mock(MascotaRepository.class);
         refugioRepository = mock(RefugioRepository.class);
         mascotaService = mock(MascotaService.class);
+        refugioAutorizacionService = new RefugioAutorizacionService(refugioRepository);
+        caracteristicaMascotaRepository = mock(CaracteristicaMascotaRepository.class);
+        when(caracteristicaMascotaRepository.findByNroRegMunicipal(any())).thenReturn(List.of());
 
         publicacionAdopcionService = new PublicacionAdopcionService(
-                publicacionAdopcionRepository, mascotaRepository, refugioRepository, mascotaService);
+                publicacionAdopcionRepository, mascotaRepository, mascotaService, refugioAutorizacionService,
+                caracteristicaMascotaRepository);
     }
 
     private Refugio crearRefugio() {
@@ -65,18 +89,24 @@ class PublicacionAdopcionServiceTest {
         return refugio;
     }
 
-    private Mascota crearMascota() {
+    private Mascota crearMascota(Refugio refugio) {
         Mascota mascota = new Mascota();
         mascota.setNroRegMunicipal(NRM);
         mascota.setNombre("Firulais");
+        mascota.setRefugio(refugio);
         return mascota;
+    }
+
+    private AuthenticatedUser usuarioRefugio() {
+        return new AuthenticatedUser(ID_RESPONSABLE_REFUGIO, "20123456789", "REFUGIO", ID_REFUGIO);
     }
 
     @Test
     void crearUnaPublicacionParaUnaMascotaExistenteSinDuplicados() {
-        when(refugioRepository.findById(ID_REFUGIO)).thenReturn(Optional.of(crearRefugio()));
-        when(mascotaRepository.findById(NRM)).thenReturn(Optional.of(crearMascota()));
-        when(publicacionAdopcionRepository.findByMascotaNroRegMunicipalAndEstadoPublicacion(NRM, PublicacionAdopcion.ESTADO_ACTIVA))
+        Refugio refugio = crearRefugio();
+        when(refugioRepository.findById(ID_REFUGIO)).thenReturn(Optional.of(refugio));
+        when(mascotaRepository.findById(NRM)).thenReturn(Optional.of(crearMascota(refugio)));
+        when(publicacionAdopcionRepository.findByMascotaNroRegMunicipalAndEstadoPublicacion(NRM, EstadoPublicacion.ACTIVA))
                 .thenReturn(Optional.empty());
         when(publicacionAdopcionRepository.save(any())).thenAnswer(invocacion -> {
             PublicacionAdopcion publicacion = invocacion.getArgument(0);
@@ -87,62 +117,80 @@ class PublicacionAdopcionServiceTest {
         CrearPublicacionAdopcionRequest request = new CrearPublicacionAdopcionRequest(
                 NRM, null, "Mestizo, 2 años", "Con patio", null);
 
-        PublicacionAdopcionResponse respuesta = publicacionAdopcionService.crear(ID_REFUGIO, request, ID_RESPONSABLE_REFUGIO);
+        PublicacionAdopcionResponse respuesta = publicacionAdopcionService.crear(request, usuarioRefugio());
 
         assertThat(respuesta.nroPublicacion()).isEqualTo(100);
-        assertThat(respuesta.estadoPublicacion()).isEqualTo(PublicacionAdopcion.ESTADO_ACTIVA);
+        assertThat(respuesta.estadoPublicacion()).isEqualTo(EstadoPublicacion.ACTIVA);
+        assertThat(respuesta.accionesDisponibles()).containsExactlyInAnyOrder(Accion.PAUSAR, Accion.FINALIZAR);
         verify(mascotaService, never()).registrar(any());
     }
 
     @Test
     void crearUnaPublicacionRegistrandoLaMascotaEnElMismoFlujo() {
-        when(refugioRepository.findById(ID_REFUGIO)).thenReturn(Optional.of(crearRefugio()));
+        Refugio refugio = crearRefugio();
+        when(refugioRepository.findById(ID_REFUGIO)).thenReturn(Optional.of(refugio));
         when(mascotaService.registrar(any())).thenReturn(
-                new ubp.das.backndvt.dto.RegistrarMascotaResultado(
-                        new ubp.das.backndvt.dto.MascotaResponse(NRM, "Firulais", "M", (short) 2024, null, true, 1, ID_REFUGIO),
+                new RegistrarMascotaResultado(
+                        new MascotaResponse(NRM, "Firulais", "M", (short) 2024, null, true, 1, ID_REFUGIO),
                         true));
-        when(mascotaRepository.findById(NRM)).thenReturn(Optional.of(crearMascota()));
-        when(publicacionAdopcionRepository.findByMascotaNroRegMunicipalAndEstadoPublicacion(NRM, PublicacionAdopcion.ESTADO_ACTIVA))
+        when(mascotaRepository.findById(NRM)).thenReturn(Optional.of(crearMascota(refugio)));
+        when(publicacionAdopcionRepository.findByMascotaNroRegMunicipalAndEstadoPublicacion(NRM, EstadoPublicacion.ACTIVA))
                 .thenReturn(Optional.empty());
         when(publicacionAdopcionRepository.save(any())).thenAnswer(invocacion -> invocacion.getArgument(0));
 
         CrearPublicacionAdopcionRequest request = new CrearPublicacionAdopcionRequest(
                 null,
-                new ubp.das.backndvt.dto.RegistrarMascotaRequest(
+                new RegistrarMascotaRequest(
                         "Firulais", "M", (short) 2024, null, null,
-                        new ubp.das.backndvt.dto.DatosPropietarioRequest(
-                                "Perez", "Ana", "20123456789", "clave123", null, null, null),
-                        ID_REFUGIO, List.of()),
+                        new DatosPropietarioRequest("Perez", "Ana", "20123456789", "clave123", null, null, null),
+                        999, // idRefugio que manda el cliente: debe ser ignorado y forzado al del JWT
+                        List.of()),
                 "Mestizo",
                 "Con patio",
                 null);
 
-        PublicacionAdopcionResponse respuesta = publicacionAdopcionService.crear(ID_REFUGIO, request, ID_RESPONSABLE_REFUGIO);
+        PublicacionAdopcionResponse respuesta = publicacionAdopcionService.crear(request, usuarioRefugio());
 
         assertThat(respuesta.nroRegMunicipal()).isEqualTo(NRM);
-        verify(mascotaService).registrar(any());
+        verify(mascotaService).registrar(
+                org.mockito.ArgumentMatchers.argThat(mascotaRequest -> mascotaRequest.idRefugio().equals(ID_REFUGIO)));
+    }
+
+    @Test
+    void crearUnaPublicacionParaUnaMascotaDeOtroRefugioRechaza() {
+        Refugio refugio = crearRefugio();
+        Refugio otroRefugio = new Refugio();
+        otroRefugio.setIdRefugio(999);
+
+        when(refugioRepository.findById(ID_REFUGIO)).thenReturn(Optional.of(refugio));
+        when(mascotaRepository.findById(NRM)).thenReturn(Optional.of(crearMascota(otroRefugio)));
+
+        CrearPublicacionAdopcionRequest request = new CrearPublicacionAdopcionRequest(NRM, null, null, null, null);
+
+        assertThatThrownBy(() -> publicacionAdopcionService.crear(request, usuarioRefugio()))
+                .isInstanceOf(AccessDeniedException.class);
     }
 
     @Test
     void crearUnaPublicacionParaUnaMascotaConPublicacionActivaRechaza() {
-        when(refugioRepository.findById(ID_REFUGIO)).thenReturn(Optional.of(crearRefugio()));
-        when(mascotaRepository.findById(NRM)).thenReturn(Optional.of(crearMascota()));
-        when(publicacionAdopcionRepository.findByMascotaNroRegMunicipalAndEstadoPublicacion(NRM, PublicacionAdopcion.ESTADO_ACTIVA))
+        Refugio refugio = crearRefugio();
+        when(refugioRepository.findById(ID_REFUGIO)).thenReturn(Optional.of(refugio));
+        when(mascotaRepository.findById(NRM)).thenReturn(Optional.of(crearMascota(refugio)));
+        when(publicacionAdopcionRepository.findByMascotaNroRegMunicipalAndEstadoPublicacion(NRM, EstadoPublicacion.ACTIVA))
                 .thenReturn(Optional.of(new PublicacionAdopcion()));
 
         CrearPublicacionAdopcionRequest request = new CrearPublicacionAdopcionRequest(NRM, null, null, null, null);
 
-        assertThatThrownBy(() -> publicacionAdopcionService.crear(ID_REFUGIO, request, ID_RESPONSABLE_REFUGIO))
+        assertThatThrownBy(() -> publicacionAdopcionService.crear(request, usuarioRefugio()))
                 .isInstanceOf(RecursoDuplicadoException.class);
     }
 
     @Test
-    void crearUnaPublicacionSiendoOtroCiudadanoDistintoAlResponsableRechaza() {
-        when(refugioRepository.findById(ID_REFUGIO)).thenReturn(Optional.of(crearRefugio()));
-
+    void crearUnaPublicacionSinSerResponsableDeNingunRefugioRechaza() {
+        AuthenticatedUser usuarioSinRefugio = new AuthenticatedUser(99, "20999999999", "CIUDADANO", null);
         CrearPublicacionAdopcionRequest request = new CrearPublicacionAdopcionRequest(NRM, null, null, null, null);
 
-        assertThatThrownBy(() -> publicacionAdopcionService.crear(ID_REFUGIO, request, 99))
+        assertThatThrownBy(() -> publicacionAdopcionService.crear(request, usuarioSinRefugio))
                 .isInstanceOf(AccessDeniedException.class);
     }
 
@@ -152,77 +200,147 @@ class PublicacionAdopcionServiceTest {
 
         CrearPublicacionAdopcionRequest request = new CrearPublicacionAdopcionRequest(NRM, null, null, null, null);
 
-        assertThatThrownBy(() -> publicacionAdopcionService.crear(ID_REFUGIO, request, ID_RESPONSABLE_REFUGIO))
+        assertThatThrownBy(() -> publicacionAdopcionService.crear(request, usuarioRefugio()))
                 .isInstanceOf(RecursoNoEncontradoException.class);
     }
 
     @Test
-    void actualizarElEstadoDeUnaPublicacionExistenteFunciona() {
+    void finalizarUnaPublicacionActivaFunciona() {
+        Refugio refugio = crearRefugio();
         PublicacionAdopcion publicacion = new PublicacionAdopcion();
         publicacion.setNroPublicacion(100);
-        publicacion.setMascota(crearMascota());
-        publicacion.setRefugio(crearRefugio());
-        publicacion.setEstadoPublicacion(PublicacionAdopcion.ESTADO_ACTIVA);
+        publicacion.setMascota(crearMascota(refugio));
+        publicacion.setRefugio(refugio);
+        publicacion.setEstadoPublicacion(EstadoPublicacion.ACTIVA);
 
+        when(refugioRepository.findById(ID_REFUGIO)).thenReturn(Optional.of(refugio));
         when(publicacionAdopcionRepository.findById(100)).thenReturn(Optional.of(publicacion));
         when(publicacionAdopcionRepository.save(any())).thenAnswer(invocacion -> invocacion.getArgument(0));
 
-        ActualizarPublicacionAdopcionRequest request = new ActualizarPublicacionAdopcionRequest(PublicacionAdopcion.ESTADO_FINALIZADA);
+        CambiarEstadoPublicacionRequest request = new CambiarEstadoPublicacionRequest(Accion.FINALIZAR);
 
-        PublicacionAdopcionResponse respuesta =
-                publicacionAdopcionService.actualizarEstado(100, request, ID_RESPONSABLE_REFUGIO);
+        PublicacionAdopcionResponse respuesta = publicacionAdopcionService.cambiarEstado(100, request, usuarioRefugio());
 
-        assertThat(respuesta.estadoPublicacion()).isEqualTo(PublicacionAdopcion.ESTADO_FINALIZADA);
+        assertThat(respuesta.estadoPublicacion()).isEqualTo(EstadoPublicacion.FINALIZADA);
+        assertThat(respuesta.accionesDisponibles()).isEmpty();
+    }
+
+    @Test
+    void activarUnaPublicacionFinalizadaRechazaPorTransicionInvalida() {
+        Refugio refugio = crearRefugio();
+        PublicacionAdopcion publicacion = new PublicacionAdopcion();
+        publicacion.setNroPublicacion(100);
+        publicacion.setMascota(crearMascota(refugio));
+        publicacion.setRefugio(refugio);
+        publicacion.setEstadoPublicacion(EstadoPublicacion.FINALIZADA);
+
+        when(refugioRepository.findById(ID_REFUGIO)).thenReturn(Optional.of(refugio));
+        when(publicacionAdopcionRepository.findById(100)).thenReturn(Optional.of(publicacion));
+
+        CambiarEstadoPublicacionRequest request = new CambiarEstadoPublicacionRequest(Accion.ACTIVAR);
+
+        assertThatThrownBy(() -> publicacionAdopcionService.cambiarEstado(100, request, usuarioRefugio()))
+                .isInstanceOf(TransicionEstadoInvalidaException.class);
+    }
+
+    @Test
+    void finalizarUnaPublicacionFinalizadaRechazaPorTransicionInvalida() {
+        Refugio refugio = crearRefugio();
+        PublicacionAdopcion publicacion = new PublicacionAdopcion();
+        publicacion.setNroPublicacion(100);
+        publicacion.setMascota(crearMascota(refugio));
+        publicacion.setRefugio(refugio);
+        publicacion.setEstadoPublicacion(EstadoPublicacion.FINALIZADA);
+
+        when(refugioRepository.findById(ID_REFUGIO)).thenReturn(Optional.of(refugio));
+        when(publicacionAdopcionRepository.findById(100)).thenReturn(Optional.of(publicacion));
+
+        CambiarEstadoPublicacionRequest request = new CambiarEstadoPublicacionRequest(Accion.FINALIZAR);
+
+        assertThatThrownBy(() -> publicacionAdopcionService.cambiarEstado(100, request, usuarioRefugio()))
+                .isInstanceOf(TransicionEstadoInvalidaException.class);
     }
 
     @Test
     void reactivarUnaPublicacionCuandoYaHayOtraActivaParaLaMismaMascotaRechaza() {
+        Refugio refugio = crearRefugio();
         PublicacionAdopcion publicacion = new PublicacionAdopcion();
         publicacion.setNroPublicacion(100);
-        publicacion.setMascota(crearMascota());
-        publicacion.setRefugio(crearRefugio());
-        publicacion.setEstadoPublicacion(PublicacionAdopcion.ESTADO_PAUSADA);
+        publicacion.setMascota(crearMascota(refugio));
+        publicacion.setRefugio(refugio);
+        publicacion.setEstadoPublicacion(EstadoPublicacion.PAUSADA);
 
+        when(refugioRepository.findById(ID_REFUGIO)).thenReturn(Optional.of(refugio));
         when(publicacionAdopcionRepository.findById(100)).thenReturn(Optional.of(publicacion));
-        when(publicacionAdopcionRepository.findByMascotaNroRegMunicipalAndEstadoPublicacion(NRM, PublicacionAdopcion.ESTADO_ACTIVA))
+        when(publicacionAdopcionRepository.findByMascotaNroRegMunicipalAndEstadoPublicacion(NRM, EstadoPublicacion.ACTIVA))
                 .thenReturn(Optional.of(new PublicacionAdopcion()));
 
-        ActualizarPublicacionAdopcionRequest request = new ActualizarPublicacionAdopcionRequest(PublicacionAdopcion.ESTADO_ACTIVA);
+        CambiarEstadoPublicacionRequest request = new CambiarEstadoPublicacionRequest(Accion.ACTIVAR);
 
-        assertThatThrownBy(() -> publicacionAdopcionService.actualizarEstado(100, request, ID_RESPONSABLE_REFUGIO))
+        assertThatThrownBy(() -> publicacionAdopcionService.cambiarEstado(100, request, usuarioRefugio()))
                 .isInstanceOf(RecursoDuplicadoException.class);
     }
 
     @Test
-    void actualizarUnaPublicacionSiendoOtroCiudadanoDistintoAlResponsableRechaza() {
+    void cambiarEstadoSiendoOtroRefugioDistintoAlDuenioDeLaPublicacionRechaza() {
+        Refugio refugio = crearRefugio();
+        Refugio otroRefugio = new Refugio();
+        otroRefugio.setIdRefugio(777);
+        Ciudadano otroResponsable = new Ciudadano();
+        otroResponsable.setIdCiudadano(55);
+        otroRefugio.setResponsable(otroResponsable);
+
         PublicacionAdopcion publicacion = new PublicacionAdopcion();
         publicacion.setNroPublicacion(100);
-        publicacion.setMascota(crearMascota());
-        publicacion.setRefugio(crearRefugio());
-        publicacion.setEstadoPublicacion(PublicacionAdopcion.ESTADO_ACTIVA);
+        publicacion.setMascota(crearMascota(refugio));
+        publicacion.setRefugio(refugio);
+        publicacion.setEstadoPublicacion(EstadoPublicacion.ACTIVA);
 
+        AuthenticatedUser usuarioOtroRefugio = new AuthenticatedUser(55, "20555555555", "REFUGIO", 777);
+        when(refugioRepository.findById(777)).thenReturn(Optional.of(otroRefugio));
         when(publicacionAdopcionRepository.findById(100)).thenReturn(Optional.of(publicacion));
 
-        ActualizarPublicacionAdopcionRequest request = new ActualizarPublicacionAdopcionRequest(PublicacionAdopcion.ESTADO_FINALIZADA);
+        CambiarEstadoPublicacionRequest request = new CambiarEstadoPublicacionRequest(Accion.FINALIZAR);
 
-        assertThatThrownBy(() -> publicacionAdopcionService.actualizarEstado(100, request, 99))
+        assertThatThrownBy(() -> publicacionAdopcionService.cambiarEstado(100, request, usuarioOtroRefugio))
                 .isInstanceOf(AccessDeniedException.class);
     }
 
     @Test
-    void listarPublicacionesFiltrandoPorEstadoActiva() {
+    void listarMisPublicacionesFiltrandoPorEstadoActivaYPaginado() {
+        Refugio refugio = crearRefugio();
         PublicacionAdopcion publicacion = new PublicacionAdopcion();
         publicacion.setNroPublicacion(100);
-        publicacion.setMascota(crearMascota());
-        publicacion.setRefugio(crearRefugio());
-        publicacion.setEstadoPublicacion(PublicacionAdopcion.ESTADO_ACTIVA);
+        publicacion.setMascota(crearMascota(refugio));
+        publicacion.setRefugio(refugio);
+        publicacion.setEstadoPublicacion(EstadoPublicacion.ACTIVA);
 
-        when(publicacionAdopcionRepository.findByEstadoPublicacion(PublicacionAdopcion.ESTADO_ACTIVA))
-                .thenReturn(List.of(publicacion));
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<PublicacionAdopcion> pagina = new PageImpl<>(List.of(publicacion), pageable, 1);
 
-        List<PublicacionAdopcionResponse> respuesta = publicacionAdopcionService.listarPorEstado(PublicacionAdopcion.ESTADO_ACTIVA);
+        when(refugioRepository.findById(ID_REFUGIO)).thenReturn(Optional.of(refugio));
+        when(publicacionAdopcionRepository.findByRefugioIdRefugioAndEstadoPublicacion(ID_REFUGIO, EstadoPublicacion.ACTIVA, pageable))
+                .thenReturn(pagina);
 
-        assertThat(respuesta).hasSize(1);
-        assertThat(respuesta.get(0).estadoPublicacion()).isEqualTo(PublicacionAdopcion.ESTADO_ACTIVA);
+        Page<PublicacionAdopcionResponse> respuesta =
+                publicacionAdopcionService.listarMisPublicaciones(EstadoPublicacion.ACTIVA, usuarioRefugio(), pageable);
+
+        assertThat(respuesta.getTotalElements()).isEqualTo(1);
+        assertThat(respuesta.getContent().get(0).estadoPublicacion()).isEqualTo(EstadoPublicacion.ACTIVA);
+    }
+
+    @Test
+    void listarMisPublicacionesSinFiltroDeEstado() {
+        Refugio refugio = crearRefugio();
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<PublicacionAdopcion> pagina = new PageImpl<>(List.of(), pageable, 0);
+
+        when(refugioRepository.findById(ID_REFUGIO)).thenReturn(Optional.of(refugio));
+        when(publicacionAdopcionRepository.findByRefugioIdRefugio(ID_REFUGIO, pageable)).thenReturn(pagina);
+
+        Page<PublicacionAdopcionResponse> respuesta =
+                publicacionAdopcionService.listarMisPublicaciones(null, usuarioRefugio(), pageable);
+
+        assertThat(respuesta.getTotalElements()).isZero();
     }
 }

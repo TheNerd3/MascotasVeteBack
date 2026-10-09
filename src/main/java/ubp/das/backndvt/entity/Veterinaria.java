@@ -1,34 +1,12 @@
 package ubp.das.backndvt.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-
-@Entity
-@Table(name = "veterinarias")
 public class Veterinaria {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_veterinaria")
     private Integer idVeterinaria;
-
-    @Column(name = "razon_social", nullable = false, length = 150)
     private String razonSocial;
-
-    @Column(name = "correo", length = 150)
     private String correo;
-
-    @Column(name = "telefono", length = 20)
     private String telefono;
-
-    @Column(name = "domicilio", length = 200)
     private String domicilio;
-
-    @Column(name = "habilitacion_municipal", length = 50)
     private String habilitacionMunicipal;
 
     public Integer getIdVeterinaria() {

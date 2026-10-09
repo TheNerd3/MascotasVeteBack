@@ -48,8 +48,6 @@ import ubp.das.backndvt.security.JwtAuthenticationFilter;
  *   manda Authorization; el propio endpoint devuelve 404 si la
  *   publicacion no esta Activa, asi que no expone fotos de pausadas o
  *   finalizadas igual)
- * - GET /atenciones-sanitarias/tipos/cantidad (endpoint de diagnostico
- *   de conexion, no expone datos sensibles)
  * - Swagger UI y la especificacion OpenAPI (documentacion de la API,
  *   no expone datos de negocio)
  *
@@ -127,7 +125,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/carnet/validar").permitAll()
                         .requestMatchers(HttpMethod.GET, "/catalogos/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/publicaciones/*/foto").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/atenciones-sanitarias/tipos/cantidad").permitAll()
                         .requestMatchers(
                                 "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/publicaciones/**").hasRole("REFUGIO")

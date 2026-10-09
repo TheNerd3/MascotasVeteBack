@@ -60,9 +60,7 @@ public class OpenApiConfig {
                         new Tag().name("6. RF20 - Ciudadanos").description("Datos propios del ciudadano autenticado y sus mascotas"),
                         new Tag().name("7. RF11 - Validacion de carnet")
                                 .description("Validacion publica del carnet sanitario para terceros"),
-                        new Tag().name("8. RF21 - Asistente virtual").description("Consulta de texto libre a un asistente virtual"),
-                        new Tag().name("9. Diagnostico")
-                                .description("Endpoint tecnico de verificacion de conexion a la base, no implementa ningun RF")))
+                        new Tag().name("8. RF21 - Asistente virtual").description("Consulta de texto libre a un asistente virtual")))
                 .components(new Components()
                         .addSecuritySchemes(ESQUEMA_BEARER, new SecurityScheme()
                                 .name(ESQUEMA_BEARER)

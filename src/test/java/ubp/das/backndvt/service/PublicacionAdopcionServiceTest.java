@@ -239,6 +239,71 @@ class PublicacionAdopcionServiceTest {
     }
 
     @Test
+    void pausarUnaPublicacionActivaFunciona() {
+        Refugio refugio = crearRefugio();
+        PublicacionAdopcion publicacion = publicacionConEstado(EstadoPublicacion.ACTIVA);
+
+        when(refugioRepository.findById(ID_REFUGIO)).thenReturn(Optional.of(refugio));
+        when(publicacionAdopcionRepository.findById(100)).thenReturn(Optional.of(publicacion));
+        when(publicacionAdopcionRepository.findResponseById(100))
+                .thenReturn(Optional.of(respuestaDe(100, EstadoPublicacion.PAUSADA)));
+
+        CambiarEstadoPublicacionRequest request = new CambiarEstadoPublicacionRequest(Accion.PAUSAR);
+
+        PublicacionAdopcionResponse respuesta = publicacionAdopcionService.cambiarEstado(100, request, usuarioRefugio());
+
+        assertThat(respuesta.estadoPublicacion()).isEqualTo(EstadoPublicacion.PAUSADA);
+        assertThat(respuesta.accionesDisponibles()).containsExactlyInAnyOrder(Accion.ACTIVAR, Accion.FINALIZAR);
+    }
+
+    @Test
+    void reactivarUnaPublicacionPausadaSinOtraActivaFunciona() {
+        Refugio refugio = crearRefugio();
+        PublicacionAdopcion publicacion = publicacionConEstado(EstadoPublicacion.PAUSADA);
+
+        when(refugioRepository.findById(ID_REFUGIO)).thenReturn(Optional.of(refugio));
+        when(publicacionAdopcionRepository.findById(100)).thenReturn(Optional.of(publicacion));
+        when(publicacionAdopcionRepository.findActivaPorMascota(NRM)).thenReturn(Optional.empty());
+        when(publicacionAdopcionRepository.findResponseById(100))
+                .thenReturn(Optional.of(respuestaDe(100, EstadoPublicacion.ACTIVA)));
+
+        CambiarEstadoPublicacionRequest request = new CambiarEstadoPublicacionRequest(Accion.ACTIVAR);
+
+        PublicacionAdopcionResponse respuesta = publicacionAdopcionService.cambiarEstado(100, request, usuarioRefugio());
+
+        assertThat(respuesta.estadoPublicacion()).isEqualTo(EstadoPublicacion.ACTIVA);
+        assertThat(respuesta.accionesDisponibles()).containsExactlyInAnyOrder(Accion.PAUSAR, Accion.FINALIZAR);
+    }
+
+    @Test
+    void pausarUnaPublicacionYaPausadaRechazaPorTransicionInvalida() {
+        Refugio refugio = crearRefugio();
+        PublicacionAdopcion publicacion = publicacionConEstado(EstadoPublicacion.PAUSADA);
+
+        when(refugioRepository.findById(ID_REFUGIO)).thenReturn(Optional.of(refugio));
+        when(publicacionAdopcionRepository.findById(100)).thenReturn(Optional.of(publicacion));
+
+        CambiarEstadoPublicacionRequest request = new CambiarEstadoPublicacionRequest(Accion.PAUSAR);
+
+        assertThatThrownBy(() -> publicacionAdopcionService.cambiarEstado(100, request, usuarioRefugio()))
+                .isInstanceOf(TransicionEstadoInvalidaException.class);
+    }
+
+    @Test
+    void activarUnaPublicacionYaActivaRechazaPorTransicionInvalida() {
+        Refugio refugio = crearRefugio();
+        PublicacionAdopcion publicacion = publicacionConEstado(EstadoPublicacion.ACTIVA);
+
+        when(refugioRepository.findById(ID_REFUGIO)).thenReturn(Optional.of(refugio));
+        when(publicacionAdopcionRepository.findById(100)).thenReturn(Optional.of(publicacion));
+
+        CambiarEstadoPublicacionRequest request = new CambiarEstadoPublicacionRequest(Accion.ACTIVAR);
+
+        assertThatThrownBy(() -> publicacionAdopcionService.cambiarEstado(100, request, usuarioRefugio()))
+                .isInstanceOf(TransicionEstadoInvalidaException.class);
+    }
+
+    @Test
     void activarUnaPublicacionFinalizadaRechazaPorTransicionInvalida() {
         Refugio refugio = crearRefugio();
         PublicacionAdopcion publicacion = publicacionConEstado(EstadoPublicacion.FINALIZADA);
